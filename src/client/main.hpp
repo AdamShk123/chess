@@ -6,6 +6,7 @@
 #include "game.hpp"
 
 #include <cstring>
+#include <cerrno>
 
 #include <iostream>
 

@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 
     if(socketFD == -1)
     {
-        std::cerr << "socket error: " << errno << std::endl;
+        std::cerr << "socket error: " << std::strerror(errno) << std::endl;
         return 1;
     }
 
@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 
     if(status == -1)
     {
-        std::cerr << "bind error: " << errno << std::endl;
+        std::cerr << "bind error: " << std::strerror(errno) << std::endl;
         return 1;
     }
 
@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 
     if(status == -1)
     {
-        std::cerr << "listen error: " << errno << std::endl;
+        std::cerr << "listen error: " << std::strerror(errno) << std::endl;
         return 1;
     }
 

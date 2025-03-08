@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 
     if(socketFD == -1)
     {
-        std::cerr << "socket error: " << errno << std::endl;
+        std::cerr << "socket error: " << std::strerror(errno) << std::endl;
         return 1;
     }
 
@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 
     if(status == -1)
     {
-        std::cerr << "connect error: " << errno << std::endl;
+        std::cerr << "connect error: " << std::strerror(errno) << std::endl;
         return 1;
     }
 
