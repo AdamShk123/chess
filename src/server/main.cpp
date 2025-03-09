@@ -7,6 +7,8 @@ int main(int argc, char** argv)
         std::cout << argv[i] << std::endl;
     }
 
+    std::cout << "Starting server..." << std::endl;
+
     int status;
     addrinfo hints{};
     addrinfo *serverInfo = nullptr;
@@ -24,23 +26,49 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    printAddresses(serverInfo);
+    char ipstr[INET6_ADDRSTRLEN];
+    addrinfo* curr = serverInfo;
+    int socketFD;
+    int yes = 1;
 
-    int socketFD = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
-
-    if(socketFD == -1)
+    while(curr != nullptr)
     {
-        std::cerr << "socket error: " << std::strerror(errno) << std::endl;
+        socketFD = socket(curr->ai_family, curr->ai_socktype, curr->ai_protocol);
+
+        if(socketFD == -1)
+        {
+            std::cerr << "socket error: " << std::strerror(errno) << std::endl;
+            curr = curr->ai_next;
+            continue;
+        }
+
+        status = setsockopt(socketFD, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+
+        if(status == -1)
+        {
+            std::cerr << "setsockopt error: " << std::strerror(errno) << std::endl;
+            return 1;
+        }
+
+        status = bind(socketFD, curr->ai_addr, curr->ai_addrlen);
+
+        if(status == -1)
+        {
+            std::cerr << "Bind error: " << std::strerror(errno) << std::endl;
+            curr = curr->ai_next;
+            continue;
+        }
+
+        break;
+    }
+
+    if(curr == nullptr)
+    {
+        std::cerr << "failed to bind!" << std::endl;
         return 1;
     }
 
-    status = bind(socketFD, serverInfo->ai_addr, serverInfo->ai_addrlen);
-
-    if(status == -1)
-    {
-        std::cerr << "bind error: " << std::strerror(errno) << std::endl;
-        return 1;
-    }
+    std::cout << "opened socket..." << std::endl;
 
     status = listen(socketFD, BACKLOG);
 
@@ -50,34 +78,51 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    std::cout << "waiting for new connections..." << std::endl;
+
+    bool quit = false;
+    socklen_t sin_size;
+    sockaddr_storage their_addr;
+    int newFD;
+
+    while(!quit)
+    {
+        sin_size = sizeof(their_addr);
+
+        newFD = accept(socketFD, (struct sockaddr *)&their_addr, &sin_size);
+
+        if(newFD == -1)
+        {
+            std::cout << "no new connection to accept..." << std::endl;
+            continue;
+        }
+
+        inet_ntop(their_addr.ss_family, get_in_addr((sockaddr *)&their_addr), ipstr, sizeof(ipstr));
+        std::cout << "server: got connection from " << ipstr << std::endl;
+
+        if (!fork()) { // this is the child process
+            close(socketFD); // child doesn't need the listener
+
+            if (send(newFD, "Hello, world!", 13, 0) == -1)
+            {
+                std::cerr << "send error" << std::endl;
+            }
+
+            close(newFD);
+
+            return 0;
+        }
+        close(newFD); // parent doesn't need this
+    }
+
     freeaddrinfo(serverInfo);
 
     return 0;
 }
 
-void printAddresses(addrinfo* info)
+void *get_in_addr(struct sockaddr *sa)
 {
-    char ipstr[INET6_ADDRSTRLEN];
-    addrinfo* curr = info;
-    while(curr != nullptr)
-    {
-        void *addr;
-
-        if(curr->ai_family == AF_INET)
-        {
-            auto *ip = (sockaddr_in*) curr->ai_addr;
-            addr = &(ip->sin_addr);
-        }
-        else
-        {
-            auto *ip = (sockaddr_in6*) curr->ai_addr;
-            addr = &(ip->sin6_addr);
-        }
-
-        // convert the IP to a string and print it:
-        inet_ntop(curr->ai_family, addr, ipstr, sizeof(ipstr));
-        std::cout << ipstr << std::endl;
-
-        curr = curr->ai_next;
-    }
+    return sa->sa_family == AF_INET
+           ? (void *) &(((struct sockaddr_in*)sa)->sin_addr)
+           : (void *) &(((struct sockaddr_in6*)sa)->sin6_addr);
 }

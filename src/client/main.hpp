@@ -14,8 +14,9 @@
 
 const char* PORT = "3490";
 constexpr int BACKLOG = 10;
+constexpr int MAXDATASIZE = 100;
 
-void printAddresses(addrinfo* info);
+void *get_in_addr(struct sockaddr *sa);
 
 bool validateAddress(const std::string& address);
 bool validatePort(const std::string& port);

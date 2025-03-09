@@ -1,3 +1,4 @@
+#include <csignal>
 #include "main.hpp"
 
 int main(int argc, char** argv)
@@ -23,6 +24,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    std::cout << "Starting server..." << std::endl;
+
     int status;
     addrinfo hints{};
     addrinfo *serverInfo = nullptr;
@@ -39,31 +42,62 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    printAddresses(serverInfo);
+    addrinfo* curr = serverInfo;
+    int socketFD;
 
-    int socketFD = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
-
-    if(socketFD == -1)
+    while(curr != nullptr)
     {
-        std::cerr << "socket error: " << std::strerror(errno) << std::endl;
+        socketFD = socket(curr->ai_family, curr->ai_socktype, curr->ai_protocol);
+
+        if(socketFD == -1)
+        {
+            std::cerr << "socket error: " << std::strerror(errno) << std::endl;
+            curr = curr->ai_next;
+            continue;
+        }
+
+        status = connect(socketFD, curr->ai_addr, curr->ai_addrlen);
+
+        if(status == -1)
+        {
+            close(socketFD);
+            std::cerr << "connect error: " << std::strerror(errno) << std::endl;
+            curr = curr->ai_next;
+            continue;
+        }
+
+        break;
+    }
+
+    if(curr == nullptr)
+    {
+        std::cerr << "client: failed to connect!" << std::endl;
         return 1;
     }
 
-    status = connect(socketFD, serverInfo->ai_addr, serverInfo->ai_addrlen);
+    std::cout << "client: connecting to..." << std::endl;
 
-    if(status == -1)
+    int numbytes;
+    char buf[MAXDATASIZE];
+
+    numbytes = recv(socketFD, buf, MAXDATASIZE-1, 0);
+    if (numbytes == -1)
     {
-        std::cerr << "connect error: " << std::strerror(errno) << std::endl;
+        std::cerr << "recv error" << std::endl;
         return 1;
     }
+    buf[numbytes] = '\0';
+    std::cout << "client: received " << buf << std::endl;
+    close(socketFD);
 
     freeaddrinfo(serverInfo);
+}
 
-    //    auto game = Game::Game();
-
-    //    game.run();
-
-    return 0;
+void *get_in_addr(struct sockaddr *sa)
+{
+    return sa->sa_family == AF_INET
+           ? (void *) &(((struct sockaddr_in*)sa)->sin_addr)
+           : (void *) &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 bool validateAddress(const std::string& address)
@@ -102,31 +136,4 @@ bool validatePort(const std::string& port)
     }
 
     return true;
-}
-
-void printAddresses(addrinfo* info)
-{
-    char ipstr[INET6_ADDRSTRLEN];
-    addrinfo* curr = info;
-    while(curr != nullptr)
-    {
-        void *addr;
-
-        if(curr->ai_family == AF_INET)
-        {
-            auto *ip = (sockaddr_in*) curr->ai_addr;
-            addr = &(ip->sin_addr);
-        }
-        else
-        {
-            auto *ip = (sockaddr_in6*) curr->ai_addr;
-            addr = &(ip->sin6_addr);
-        }
-
-        // convert the IP to a string and print it:
-        inet_ntop(curr->ai_family, addr, ipstr, sizeof(ipstr));
-        std::cout << ipstr << std::endl;
-
-        curr = curr->ai_next;
-    }
 }
