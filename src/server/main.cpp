@@ -80,12 +80,11 @@ int main(int argc, char** argv)
 
     std::cout << "waiting for new connections..." << std::endl;
 
-    bool quit = false;
     socklen_t sin_size;
     sockaddr_storage their_addr;
     int newFD;
 
-    while(!quit)
+    while(true)
     {
         sin_size = sizeof(their_addr);
 
@@ -100,19 +99,38 @@ int main(int argc, char** argv)
         inet_ntop(their_addr.ss_family, get_in_addr((sockaddr *)&their_addr), ipstr, sizeof(ipstr));
         std::cout << "server: got connection from " << ipstr << std::endl;
 
-        if (!fork()) { // this is the child process
-            close(socketFD); // child doesn't need the listener
+        int pid = fork();
 
-            if (send(newFD, "Hello, world!", 13, 0) == -1)
-            {
-                std::cerr << "send error" << std::endl;
-            }
-
-            close(newFD);
-
-            return 0;
+        if(pid == -1)
+        {
+            std::cerr << "server: fork failed" << std::endl;
+            return 1;
         }
-        close(newFD); // parent doesn't need this
+        else if(pid == 0)
+        {
+            char* args[3];
+            args[0] = strdup("../match/match");
+            args[1] = nullptr;
+            execvp(args[0], args);
+        }
+        else
+        {
+
+        }
+
+//        if (!fork()) { // this is the child process
+//            close(socketFD); // child doesn't need the listener
+//
+//            if (send(newFD, "Hello, world!", 13, 0) == -1)
+//            {
+//                std::cerr << "send error" << std::endl;
+//            }
+//
+//            close(newFD);
+//
+//            return 0;
+//        }
+//        close(newFD); // parent doesn't need this
     }
 
     freeaddrinfo(serverInfo);

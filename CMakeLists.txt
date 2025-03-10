@@ -8,4 +8,5 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 # Include sub-projects.
 add_subdirectory (src/client)
 add_subdirectory (src/server)
+add_subdirectory (src/match)
 add_subdirectory (tests)
