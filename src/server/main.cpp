@@ -84,6 +84,8 @@ int main(int argc, char** argv)
     sockaddr_storage their_addr;
     int newFD;
 
+    std::vector<int> connections{};
+
     while(true)
     {
         sin_size = sizeof(their_addr);
@@ -92,30 +94,37 @@ int main(int argc, char** argv)
 
         if(newFD == -1)
         {
-            std::cout << "no new connection to accept..." << std::endl;
+            std::cout << "server: failed to accept" << std::endl;
             continue;
         }
 
         inet_ntop(their_addr.ss_family, get_in_addr((sockaddr *)&their_addr), ipstr, sizeof(ipstr));
         std::cout << "server: got connection from " << ipstr << std::endl;
 
-        int pid = fork();
+        if(connections.size() == 2)
+        {
+            int pid = fork();
 
-        if(pid == -1)
-        {
-            std::cerr << "server: fork failed" << std::endl;
-            return 1;
-        }
-        else if(pid == 0)
-        {
-            char* args[3];
-            args[0] = strdup("../match/match");
-            args[1] = nullptr;
-            execvp(args[0], args);
+            if(pid == -1)
+            {
+                std::cerr << "server: fork failed" << std::endl;
+                return 1;
+            }
+            else if(pid == 0)
+            {
+                char* args[3];
+                args[0] = strdup("../match/match");
+                args[1] = nullptr;
+                execvp(args[0], args);
+            }
+            else
+            {
+
+            }
         }
         else
         {
-
+            connections.push_back(newFD);
         }
 
 //        if (!fork()) { // this is the child process
