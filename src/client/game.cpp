@@ -51,18 +51,32 @@ namespace Game
         SDL_Quit();
     }
 
+    void Game::render()
+    {
+        SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+        SDL_RenderClear(m_renderer);
+
+        SDL_SetRenderDrawColor(m_renderer, 0x90, 0x90, 0x90, 0xFF);
+        SDL_FRect rect{0,0,64,64};
+        SDL_RenderFillRect(m_renderer,&rect);
+
+        SDL_RenderPresent(m_renderer);
+    }
+
     void Game::run()
     {
+        auto board = Board();
+
         bool done = false;
 
         SDL_Event event;
 
-        uint64_t start = 0;
-        uint64_t last = 0;
+//        uint64_t start = 0;
+//        uint64_t last = 0;
 
         while(!done)
         {
-            start = SDL_GetTicks();
+//            start = SDL_GetTicks();
 
             while(SDL_PollEvent(&event))
             {
@@ -79,13 +93,10 @@ namespace Game
                 }
             }
 
-            SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-            SDL_RenderClear(m_renderer);
+            render();
 
-            SDL_RenderPresent(m_renderer);
-
-            double fps = 1000.0 / static_cast<double>(last - start);
-            std::cout << "FPS: " << fps << std::endl;
+//            double fps = 1000.0 / static_cast<double>(last - start);
+//            std::cout << "FPS: " << fps << std::endl;
         }
     }
 }

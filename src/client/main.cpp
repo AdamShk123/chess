@@ -72,25 +72,31 @@ int main(int argc, char** argv)
     if(curr == nullptr)
     {
         std::cerr << "client: failed to connect!" << std::endl;
-        return 1;
+//        return 1;
     }
 
-    std::cout << "client: connecting to..." << std::endl;
+//    std::cout << "client: connecting to..." << std::endl;
+//
+//    int numbytes;
+//    char buf[MAXDATASIZE];
+//
+//    numbytes = recv(socketFD, buf, MAXDATASIZE-1, 0);
+//    if (numbytes == -1)
+//    {
+//        std::cerr << "recv error" << std::endl;
+//        return 1;
+//    }
+//    buf[numbytes] = '\0';
+//    std::cout << "client: received " << buf << std::endl;
+//    close(socketFD);
+//
+//    freeaddrinfo(serverInfo);
 
-    int numbytes;
-    char buf[MAXDATASIZE];
+    auto game = Game::Game();
 
-    numbytes = recv(socketFD, buf, MAXDATASIZE-1, 0);
-    if (numbytes == -1)
-    {
-        std::cerr << "recv error" << std::endl;
-        return 1;
-    }
-    buf[numbytes] = '\0';
-    std::cout << "client: received " << buf << std::endl;
-    close(socketFD);
+    game.run();
 
-    freeaddrinfo(serverInfo);
+    return 0;
 }
 
 void *get_in_addr(struct sockaddr *sa)

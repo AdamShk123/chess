@@ -3,7 +3,9 @@
 
 #include <iostream>
 
-#include "SDL3/SDL.h"
+#include <SDL3/SDL.h>
+
+#include "board.hpp"
 
 namespace Game
 {
@@ -21,6 +23,8 @@ namespace Game
     private:
         SDL_Window* m_window = nullptr;
         SDL_Renderer* m_renderer = nullptr;
+
+        void render();
     };
 
 } // Game

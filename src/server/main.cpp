@@ -103,24 +103,7 @@ int main(int argc, char** argv)
 
         if(connections.size() == 2)
         {
-            int pid = fork();
-
-            if(pid == -1)
-            {
-                std::cerr << "server: fork failed" << std::endl;
-                return 1;
-            }
-            else if(pid == 0)
-            {
-                char* args[3];
-                args[0] = strdup("../match/match");
-                args[1] = nullptr;
-                execvp(args[0], args);
-            }
-            else
-            {
-
-            }
+            connections
         }
         else
         {

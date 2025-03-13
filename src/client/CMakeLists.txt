@@ -1,6 +1,6 @@
 find_package(SDL3 CONFIG REQUIRED)
 
-add_executable(client main.cpp)
+add_executable(client main.cpp game.cpp piece.cpp pawn.cpp board.cpp)
 
 target_link_libraries(client PRIVATE SDL3::SDL3)
 
