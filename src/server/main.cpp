@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
         if(connections.size() == 2)
         {
-            connections
+//            connections
         }
         else
         {
