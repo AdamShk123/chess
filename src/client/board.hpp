@@ -19,6 +19,9 @@ namespace Game
         ~Board() = default;
     private:
         std::array<std::array<std::unique_ptr<Piece>,8>,8> board{};
+        std::vector<std::unique_ptr<Piece>> pieceList{};
+//        std::vector<std::unique_ptr<Piece>> whiteList{};
+//        std::vector<std::unique_ptr<Piece>> blackList{};
     };
 }
 
