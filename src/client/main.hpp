@@ -14,7 +14,7 @@
 
 const char* PORT = "3490";
 constexpr int BACKLOG = 10;
-constexpr int MAXDATASIZE = 100;
+constexpr int MAX_DATA_SIZE = 100;
 
 void *get_in_addr(struct sockaddr *sa);
 

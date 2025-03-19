@@ -72,7 +72,11 @@ int main(int argc, char** argv)
     if(curr == nullptr)
     {
         std::cerr << "client: failed to connect!" << std::endl;
-//        return 1;
+        return 1;
+    }
+    else
+    {
+        std::cout << "here" << std::endl;
     }
 
 //    std::cout << "client: connecting to..." << std::endl;
@@ -92,9 +96,20 @@ int main(int argc, char** argv)
 //
 //    freeaddrinfo(serverInfo);
 
-    auto game = Game::Game();
+    if (send(socketFD, "Hello, world!", 13, 0) == -1)
+    {
+        std::cerr << "send error" << std::endl;
+    }
+    else
+    {
+        std::cout << "sent message" << std::endl;
+    }
 
-    game.run();
+    close(socketFD);
+
+//    auto game = Game::Game();
+
+//    game.run();
 
     return 0;
 }
