@@ -14,7 +14,7 @@ auto main(int argc, char** argv) -> int
 
     std::cout << "Starting server..." << std::endl;
 
-    auto addrInfo = loadInfo();
+    const auto addrInfo = loadInfo();
 
     if(!addrInfo.has_value())
     {
@@ -22,7 +22,7 @@ auto main(int argc, char** argv) -> int
         return 1;
     }
 
-    auto socketFD = createSocket(addrInfo.value());
+    const auto socketFD = createSocket(addrInfo.value());
 
     if(!socketFD.has_value())
     {
@@ -45,12 +45,6 @@ auto main(int argc, char** argv) -> int
 
     std::cout << "waiting for new connections..." << std::endl;
 
-    char ipstr[INET6_ADDRSTRLEN];
-
-    socklen_t sin_size;
-    sockaddr_storage their_addr{};
-    int newFD;
-
     std::vector<pollfd> connections{};
 
 //    std::unordered_map<int,int> socketToMatch{};
@@ -63,6 +57,10 @@ auto main(int argc, char** argv) -> int
     {
         if(connections.size() != MAX_CONNECTIONS)
         {
+            socklen_t sin_size;
+            sockaddr_storage their_addr{};
+            int newFD;
+
             sin_size = sizeof(their_addr);
 
             int numEvents = poll(&pfd, 1, TIMEOUT);
@@ -84,8 +82,9 @@ auto main(int argc, char** argv) -> int
                         continue;
                     }
 
-                    inet_ntop(their_addr.ss_family, get_in_addr((sockaddr *)&their_addr), ipstr, sizeof(ipstr));
-                    std::cout << "server: got connection from " << ipstr << std::endl;
+                    std::array<char,IP_V6_LENGTH> ipstr{};
+                    inet_ntop(their_addr.ss_family, get_in_addr((sockaddr *)&their_addr), ipstr.data(), ipstr.size());
+                    std::cout << "server: got connection from " << ipstr.data() << std::endl;
 
                     connections.push_back({newFD, POLLIN, 0});
                 }
@@ -97,20 +96,23 @@ auto main(int argc, char** argv) -> int
         if(numEvents == -1)
         {
             std::cerr << "poll failed!" << std::endl;
-            break;
         }
 
         for(const auto& conn : connections)
         {
+            if(numEvents == 0) break;
+
+            numEvents -= 1;
+
             if(conn.revents & (POLLIN | POLLHUP))
             {
                 char buf[MAX_DATA_SIZE];
 
-                size_t numBytes = recv(conn.fd, buf, MAX_DATA_SIZE-1, 0);
+                auto numBytes = static_cast<int>(recv(conn.fd, buf, MAX_DATA_SIZE-1, 0));
 
                 std::cout << "bytes: " << numBytes << std::endl;
 
-                if (static_cast<int>(numBytes) == -1)
+                if (numBytes == -1)
                 {
                     std::cerr << "recv error" << std::endl;
                     close(conn.fd);
@@ -142,7 +144,7 @@ auto signalHandler(int signal) -> void
     }
 }
 
-void *get_in_addr(struct sockaddr *sa)
+auto get_in_addr(sockaddr *sa) -> void*
 {
     return sa->sa_family == AF_INET
            ? (void *) &(((struct sockaddr_in*)sa)->sin_addr)

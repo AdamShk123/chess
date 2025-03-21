@@ -6,6 +6,9 @@
 #include <SDL3/SDL.h>
 
 #include "board.hpp"
+#include "input.hpp"
+#include "event_queue.hpp"
+#include "event_dispatcher.hpp"
 
 namespace Game
 {

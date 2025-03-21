@@ -27,7 +27,9 @@ constexpr int TIMEOUT = 2000;
 
 constexpr int MAX_DATA_SIZE = 100;
 
-void *get_in_addr(sockaddr *sa);
+constexpr int IP_V6_LENGTH = 46;
+
+auto get_in_addr(sockaddr *sa) -> void*;
 
 auto signalHandler(int signal) -> void;
 

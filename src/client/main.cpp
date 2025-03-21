@@ -26,77 +26,30 @@ int main(int argc, char** argv)
 
     std::cout << "Starting server..." << std::endl;
 
-    int status;
-    addrinfo hints{};
-    addrinfo *serverInfo = nullptr;
+    const auto addrInfo = loadInfo();
 
-    std::memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-
-    status = getaddrinfo(address.c_str(), port.c_str(), &hints, &serverInfo);
-
-    if(status != 0)
+    if(!addrInfo.has_value())
     {
-        std::cerr << "getaddrinfo error: " << gai_strerror(status) << std::endl;
+        std::cerr << "getaddrinfo error: " << gai_strerror(addrInfo.error()) << std::endl;
         return 1;
     }
 
-    addrinfo* curr = serverInfo;
-    int socketFD;
+    const auto socketFD = createSocket(addrInfo.value());
 
-    while(curr != nullptr)
+    if(!socketFD.has_value())
     {
-        socketFD = socket(curr->ai_family, curr->ai_socktype, curr->ai_protocol);
-
-        if(socketFD == -1)
+        switch (socketFD.error())
         {
-            std::cerr << "socket error: " << std::strerror(errno) << std::endl;
-            curr = curr->ai_next;
-            continue;
+            case CREATE:
+                std::cerr << "CREATE: " << strerror(errno) << std::endl;
+                return 1;
+            case CONNECT:
+                std::cerr << "CONNECT: " << strerror(errno) << std::endl;
+                return 1;
         }
-
-        status = connect(socketFD, curr->ai_addr, curr->ai_addrlen);
-
-        if(status == -1)
-        {
-            close(socketFD);
-            std::cerr << "connect error: " << std::strerror(errno) << std::endl;
-            curr = curr->ai_next;
-            continue;
-        }
-
-        break;
     }
 
-    if(curr == nullptr)
-    {
-        std::cerr << "client: failed to connect!" << std::endl;
-        return 1;
-    }
-    else
-    {
-        std::cout << "here" << std::endl;
-    }
-
-//    std::cout << "client: connecting to..." << std::endl;
-//
-//    int numbytes;
-//    char buf[MAXDATASIZE];
-//
-//    numbytes = recv(socketFD, buf, MAXDATASIZE-1, 0);
-//    if (numbytes == -1)
-//    {
-//        std::cerr << "recv error" << std::endl;
-//        return 1;
-//    }
-//    buf[numbytes] = '\0';
-//    std::cout << "client: received " << buf << std::endl;
-//    close(socketFD);
-//
-//    freeaddrinfo(serverInfo);
-
-    if (send(socketFD, "Hello, world!", 13, 0) == -1)
+    if (send(socketFD.value(), "Hello, world!", 13, 0) == -1)
     {
         std::cerr << "send error" << std::endl;
     }
@@ -105,11 +58,11 @@ int main(int argc, char** argv)
         std::cout << "sent message" << std::endl;
     }
 
-    close(socketFD);
+    close(socketFD.value());
 
-//    auto game = Game::Game();
+    auto game = Game::Game();
 
-//    game.run();
+    game.run();
 
     return 0;
 }
@@ -157,4 +110,62 @@ bool validatePort(const std::string& port)
     }
 
     return true;
+}
+
+auto loadInfo() -> std::expected<std::unique_ptr<addrinfo,AddrInfoDeleter>,loadInfoError>
+{
+    addrinfo hints{};
+    addrinfo *addrInfo = nullptr;
+
+    std::memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    int status = getaddrinfo(ADDRESS, PORT, &hints, &addrInfo);
+
+    if(status != 0)
+    {
+        return std::unexpected(static_cast<loadInfoError>(status));
+    }
+
+    return std::unique_ptr<addrinfo,AddrInfoDeleter>(addrInfo);
+}
+
+auto createSocket(const std::unique_ptr<addrinfo,AddrInfoDeleter>& info) -> std::expected<int,socketError>
+{
+    addrinfo* curr = info.get();
+    int socketFD;
+
+    std::optional<socketError> last = std::nullopt;
+
+    while(curr != nullptr)
+    {
+        socketFD = socket(curr->ai_family, curr->ai_socktype, curr->ai_protocol);
+
+        if(socketFD == -1)
+        {
+            curr = curr->ai_next;
+            last = socketError::CREATE;
+            continue;
+        }
+
+        int status = connect(socketFD, curr->ai_addr, curr->ai_addrlen);
+
+        if(status == -1)
+        {
+            close(socketFD);
+            curr = curr->ai_next;
+            last = socketError::CONNECT;
+            continue;
+        }
+
+        break;
+    }
+
+    if(curr == nullptr)
+    {
+        return last.has_value() ? std::unexpected(last.value()) : std::unexpected(socketError::CREATE);
+    }
+
+    return socketFD;
 }

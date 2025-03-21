@@ -66,6 +66,9 @@ namespace Game
     void Game::run()
     {
         auto board = Board();
+        auto input = Input();
+        auto eventQueue = EventQueue();
+        auto eventDispatcher = EventDispatcher();
 
         bool done = false;
 
@@ -90,7 +93,27 @@ namespace Game
                     {
                         done = true;
                     }
+                    switch (event.key.key)
+                    {
+                        case SDLK_ESCAPE:
+                            eventQueue.push(std::make_unique<Event>(EventType::EscapeKeyPressed));
+                            break;
+                    }
                 }
+                else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+                {
+                    eventQueue.push(std::make_unique<MouseButtonPressedEvent>(EventType::MouseButtonPressed, 0, 0));
+                }
+                else if(event.type == SDL_EVENT_MOUSE_BUTTON_UP)
+                {
+                    eventQueue.push(std::make_unique<MouseButtonReleasedEvent>(EventType::MouseButtonReleased, 0, 0));
+                }
+            }
+
+            while(!eventQueue.empty())
+            {
+                auto next = eventQueue.pop();
+                eventDispatcher.dispatch(next);
             }
 
             render();
