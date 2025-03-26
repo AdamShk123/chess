@@ -7,6 +7,9 @@
 #include <vector>
 #include <functional>
 #include <memory>
+#include <typeindex>
+#include <cstdint>
+#include <any>
 
 namespace Game
 {
@@ -14,18 +17,43 @@ namespace Game
     class EventDispatcher
     {
     public:
-        using EventHandler = std::function<void(const std::unique_ptr<Event>&)>;
+        using Callback = std::function<void(const void*)>;
+        using Handle = std::uint64_t;
 
-        EventDispatcher();
-        ~EventDispatcher();
+        EventDispatcher() : m_callbacks(), m_currentHandle(0) {}
 
-        void subscribe(EventType type, EventHandler handler);
-        void dispatch(const std::unique_ptr<Event>& event);
+        ~EventDispatcher() = default;
+
+        template<typename T>
+        auto dispatch(const T *event) -> void
+        {
+            for(const auto& callback : m_callbacks[std::type_index(typeid(T))])
+            {
+                callback.second(event);
+            }
+        }
+
+        template<typename T>
+        auto subscribe(const std::function<void(const T&)>& callback) -> Handle
+        {
+            m_callbacks[std::type_index(typeid(T))][m_currentHandle] = [callback](const auto& msg){
+                const T *concrete = static_cast<const T*>(msg);
+                callback(*concrete);
+            };
+            return m_currentHandle++;
+        }
+
+        template<typename T>
+        auto unsubscribe(EventDispatcher::Handle handle) -> void
+        {
+            m_callbacks[std::type_index(typeid(T))].erase(handle);
+        }
 
     private:
-        std::unordered_map<EventType,std::vector<EventHandler>> m_handlers;
+        std::unordered_map<std::type_index,std::unordered_map<Handle,Callback>> m_callbacks;
+        Handle m_currentHandle;
     };
 
 } // Game
 
-#endif //CHESS_EVENT_DISPATCHER_HPP
+#endif // CHESS_EVENT_DISPATCHER_HPP

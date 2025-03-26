@@ -6,9 +6,9 @@
 #include <SDL3/SDL.h>
 
 #include "board.hpp"
-#include "input.hpp"
-#include "event_queue.hpp"
 #include "event_dispatcher.hpp"
+#include "start_scene.hpp"
+#include "scene.hpp"
 
 namespace Game
 {
@@ -23,9 +23,16 @@ namespace Game
         ~Game();
 
         void run();
+        EventDispatcher& getEventDispatcher();
+        void finish();
     private:
         SDL_Window* m_window = nullptr;
         SDL_Renderer* m_renderer = nullptr;
+
+        EventDispatcher m_eventDispatcher;
+        std::unique_ptr<Scene> m_scene;
+
+        bool m_done = false;
 
         void render();
     };

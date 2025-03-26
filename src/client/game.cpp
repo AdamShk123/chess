@@ -2,7 +2,7 @@
 
 namespace Game
 {
-    Game::Game()
+    Game::Game() : m_eventDispatcher(), m_scene(std::make_unique<StartScene>(*this))
     {
         const auto metadataResult = SDL_SetAppMetadata("Chess", "1.0.0", "com.example.chess");
 
@@ -66,18 +66,21 @@ namespace Game
     void Game::run()
     {
         auto board = Board();
-        auto input = Input();
-        auto eventQueue = EventQueue();
-        auto eventDispatcher = EventDispatcher();
 
-        bool done = false;
+        auto press = [](const auto& event){
+            std::cout << event.x << "," << event.y << std::endl;
+        };
+
+        m_eventDispatcher.subscribe<MousePressedEvent>(press);
 
         SDL_Event event;
 
 //        uint64_t start = 0;
 //        uint64_t last = 0;
 
-        while(!done)
+        m_scene->enter();
+
+        while(!m_done)
         {
 //            start = SDL_GetTicks();
 
@@ -85,41 +88,57 @@ namespace Game
             {
                 if(event.type == SDL_EVENT_QUIT)
                 {
-                    done = true;
+                    finish();
                 }
                 else if(event.type == SDL_EVENT_KEY_DOWN)
                 {
                     if(event.key.key == SDLK_ESCAPE)
                     {
-                        done = true;
-                    }
-                    switch (event.key.key)
-                    {
-                        case SDLK_ESCAPE:
-                            eventQueue.push(std::make_unique<Event>(EventType::EscapeKeyPressed));
-                            break;
+                        EscapePressedEvent temp{};
+                        m_eventDispatcher.dispatch<EscapePressedEvent>(&temp);
                     }
                 }
                 else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
                 {
-                    eventQueue.push(std::make_unique<MouseButtonPressedEvent>(EventType::MouseButtonPressed, 0, 0));
+                    if(event.button.button == SDL_BUTTON_LEFT)
+                    {
+                        MousePressedEvent temp{static_cast<int>(event.button.x), static_cast<int>(event.button.y)};
+                        m_eventDispatcher.dispatch<MousePressedEvent>(&temp);
+                    }
                 }
                 else if(event.type == SDL_EVENT_MOUSE_BUTTON_UP)
                 {
-                    eventQueue.push(std::make_unique<MouseButtonReleasedEvent>(EventType::MouseButtonReleased, 0, 0));
+                    if(event.button.button == SDL_BUTTON_LEFT)
+                    {
+                        MouseReleasedEvent temp{static_cast<int>(event.button.x), static_cast<int>(event.button.y)};
+                        m_eventDispatcher.dispatch<MouseReleasedEvent>(&temp);
+                    }
                 }
+
             }
 
-            while(!eventQueue.empty())
+            auto next = m_scene->update();
+
+            m_scene->render();
+
+            if(next.has_value())
             {
-                auto next = eventQueue.pop();
-                eventDispatcher.dispatch(next);
+                m_scene = std::move(next.value());
+                m_scene->enter();
             }
-
-            render();
 
 //            double fps = 1000.0 / static_cast<double>(last - start);
 //            std::cout << "FPS: " << fps << std::endl;
         }
+    }
+
+    EventDispatcher &Game::getEventDispatcher()
+    {
+        return m_eventDispatcher;
+    }
+
+    void Game::finish()
+    {
+        m_done = true;
     }
 }

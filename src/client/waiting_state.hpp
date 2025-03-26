@@ -1,12 +1,11 @@
-#ifndef CHESS_START_SCENE_HPP
-#define CHESS_START_SCENE_HPP
+#ifndef CHESS_WAITING_STATE_HPP
+#define CHESS_WAITING_STATE_HPP
 
 #include "scene.hpp"
 #include "event.hpp"
 #include "game.hpp"
 #include "interface_drawable.hpp"
 #include "interface_clickable.hpp"
-#include "play_button.hpp"
 
 #include <exception>
 
@@ -14,11 +13,11 @@ namespace Game
 {
     class Game;
 
-    class StartScene : public Scene
+    class WaitingState : public Scene
     {
     public:
-        explicit StartScene(Game& game);
-        ~StartScene() override;
+        explicit WaitingState(Game& game);
+        ~WaitingState() override;
 
         auto enter() -> void override;
         auto update() -> std::optional<std::unique_ptr<Scene>> override;
@@ -33,10 +32,10 @@ namespace Game
 
         std::optional<std::unique_ptr<Scene>> m_next;
 
-        std::vector<std::shared_ptr<Clickable>> m_clickables;
-        std::vector<std::shared_ptr<Drawable>> m_drawables;
+        std::vector<std::unique_ptr<Clickable>> m_clickables;
+        std::vector<std::unique_ptr<Drawable>> m_drawables;
     };
 
 } // Game
 
-#endif //CHESS_START_SCENE_HPP
+#endif //CHESS_WAITING_STATE_HPP

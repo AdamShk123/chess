@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package Chess;
+
+message Message
+{
+  enum Type
+  {
+    JOIN_GAME = 0;
+    CREATE_GAME = 1;
+    MAKE_MOVE = 2;
+    RESIGN = 3;
+    WIN = 4;
+    LOSE = 5;
+    DRAW = 6;
+  }
+
+  message Position
+  {
+    uint32 row = 1;
+    uint32 col = 2;
+  }
+
+  message Move
+  {
+    Position to = 1;
+    Position from = 2;
+  }
+
+  Type type = 1;
+  bool isWhite = 2;
+  Move move = 3;
+}

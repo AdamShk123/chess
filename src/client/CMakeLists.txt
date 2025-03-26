@@ -1,6 +1,6 @@
 find_package(SDL3 CONFIG REQUIRED)
 
-add_executable(client main.cpp game.cpp piece.cpp pawn.cpp board.cpp input.cpp event_queue.cpp event_dispatcher.cpp)
+add_executable(client main.cpp game.cpp piece.cpp pawn.cpp board.cpp start_scene.cpp waiting_state.cpp play_button.cpp)
 
 target_link_libraries(client PRIVATE SDL3::SDL3)
 

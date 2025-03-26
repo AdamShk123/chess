@@ -1,6 +1,9 @@
 #ifndef CHESS_SCENE_HPP
 #define CHESS_SCENE_HPP
 
+#include <memory>
+#include <optional>
+
 namespace Game
 {
     class Scene
@@ -8,7 +11,9 @@ namespace Game
     public:
         virtual ~Scene() = default;
 
-        virtual void enter();
+        virtual auto enter() -> void = 0;
+        virtual auto update() -> std::optional<std::unique_ptr<Scene>> = 0;
+        virtual auto render() -> void = 0;
     private:
     };
 }
