@@ -51,27 +51,21 @@ namespace Game
         SDL_Quit();
     }
 
-    void Game::render()
-    {
-        SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-        SDL_RenderClear(m_renderer);
-
-        SDL_SetRenderDrawColor(m_renderer, 0x90, 0x90, 0x90, 0xFF);
-        SDL_FRect rect{0,0,64,64};
-        SDL_RenderFillRect(m_renderer,&rect);
-
-        SDL_RenderPresent(m_renderer);
-    }
-
-    void Game::run()
+    auto Game::run() -> void
     {
         auto board = Board();
 
-        auto press = [](const auto& event){
-            std::cout << event.x << "," << event.y << std::endl;
+        auto sceneChange = [&scene = m_scene](const SceneChangedEvent& event)
+        {
+            scene = std::unique_ptr<Scene>(event.scene.get());
+            scene->enter();
         };
 
-        m_eventDispatcher.subscribe<MousePressedEvent>(press);
+        m_eventDispatcher.subscribe<SceneChangedEvent>(sceneChange);
+
+        SceneChangedEvent new_scene{};
+        new_scene.scene = std::make_unique<WaitingScene>(*this);
+        m_eventDispatcher.dispatch<SceneChangedEvent>(&new_scene);
 
         SDL_Event event;
 
@@ -132,13 +126,23 @@ namespace Game
         }
     }
 
-    EventDispatcher &Game::getEventDispatcher()
+    auto Game::getEventDispatcher() -> EventDispatcher&
     {
         return m_eventDispatcher;
     }
 
-    void Game::finish()
+    auto Game::finish() -> void
     {
         m_done = true;
+    }
+
+    auto Game::loadTexture(const std::string &path) -> Texture
+    {
+        return Texture(IMG_LoadTexture(m_renderer,path.c_str()));
+    }
+
+    auto Game::getRenderer() -> SDL_Renderer*
+    {
+        return m_renderer;
     }
 }

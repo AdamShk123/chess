@@ -2,7 +2,7 @@
 
 namespace Game
 {
-    StartScene::StartScene(Game& game) : m_game(game), m_clickables(), m_drawables() {}
+    StartScene::StartScene(Game& game) : m_game(game), m_clickables(), m_drawables(), m_textures() {}
 
     auto StartScene::enter() -> void
     {
@@ -21,7 +21,10 @@ namespace Game
 
         m_pressHandle = m_game.getEventDispatcher().subscribe<MousePressedEvent>(press);
 
-        auto playButton = std::shared_ptr<PlayButton>();
+        const std::string path = "../../assets/chess.png";
+        m_textures[path] = m_game.loadTexture(path);
+
+        auto playButton = std::make_shared<PlayButton>(0,0,m_textures[path],m_game.getRenderer());
         m_drawables.push_back(playButton);
         m_clickables.push_back(playButton);
     }
@@ -43,15 +46,26 @@ namespace Game
 
     auto StartScene::render() -> void
     {
+        auto renderer = m_game.getRenderer();
+        SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+        SDL_RenderClear(renderer);
+
         for(const auto& drawable : m_drawables)
         {
             drawable->draw();
         }
+
+        SDL_SetRenderDrawColor(renderer, 0xFF, 0x0, 0x0, 0xFF);
+        SDL_FRect rect{100,100,100,100};
+        SDL_RenderFillRect(renderer, &rect);
+
+        SDL_RenderPresent(renderer);
     }
 
     StartScene::~StartScene()
     {
-        m_game.getEventDispatcher().unsubscribe<MousePressedEvent>(m_escapeHandle);
-        m_game.getEventDispatcher().unsubscribe<MouseReleasedEvent>(m_pressHandle);
+        auto& ref = m_game.getEventDispatcher();
+        ref.unsubscribe<MousePressedEvent>(m_escapeHandle);
+        ref.unsubscribe<MouseReleasedEvent>(m_pressHandle);
     }
 } // Game

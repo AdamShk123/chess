@@ -12,7 +12,7 @@ namespace Game
     class PlayButton : public Drawable, public Clickable
     {
     public:
-        PlayButton(int x, int y, const std::unique_ptr<SDL_Texture,TextureDestroyer>& texture);
+        PlayButton(int x, int y, const Texture& texture, SDL_Renderer* renderer);
 
         void draw() override;
         bool isWithinBounds(int x, int y) override;

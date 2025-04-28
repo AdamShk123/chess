@@ -35,6 +35,8 @@ namespace Game
 
         std::vector<std::shared_ptr<Clickable>> m_clickables;
         std::vector<std::shared_ptr<Drawable>> m_drawables;
+
+        std::unordered_map<std::string,Texture> m_textures;
     };
 
 } // Game

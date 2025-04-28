@@ -5,6 +5,8 @@
 #ifndef CHESS_EVENT_HPP
 #define CHESS_EVENT_HPP
 
+#include "scene.hpp"
+
 namespace Game
 {
     struct MousePressedEvent
@@ -22,6 +24,11 @@ namespace Game
     struct EscapePressedEvent
     {
 
+    };
+
+    struct SceneChangedEvent
+    {
+        std::unique_ptr<Scene> scene;
     };
 }
 

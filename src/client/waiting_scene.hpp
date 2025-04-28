@@ -1,5 +1,5 @@
-#ifndef CHESS_WAITING_STATE_HPP
-#define CHESS_WAITING_STATE_HPP
+#ifndef CHESS_WAITING_SCENE_HPP
+#define CHESS_WAITING_SCENE_HPP
 
 #include "scene.hpp"
 #include "event.hpp"
@@ -13,11 +13,11 @@ namespace Game
 {
     class Game;
 
-    class WaitingState : public Scene
+    class WaitingScene : public Scene
     {
     public:
-        explicit WaitingState(Game& game);
-        ~WaitingState() override;
+        explicit WaitingScene(Game& game);
+        ~WaitingScene() override;
 
         auto enter() -> void override;
         auto update() -> std::optional<std::unique_ptr<Scene>> override;
@@ -38,4 +38,4 @@ namespace Game
 
 } // Game
 
-#endif //CHESS_WAITING_STATE_HPP
+#endif //CHESS_WAITING_SCENE_HPP

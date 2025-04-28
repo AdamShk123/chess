@@ -13,17 +13,29 @@ namespace Game
         }
     };
 
+    using Texture = std::unique_ptr<SDL_Texture,TextureDestroyer>;
+
     class Drawable
     {
     public:
-        Drawable(int x, int y, const std::unique_ptr<SDL_Texture,TextureDestroyer>& texture) : m_x(x), m_y(y), m_texture(texture) {}
+        Drawable(int x, int y, const Texture& texture, SDL_Renderer* renderer) : m_x(x), m_y(y), m_texture(texture), m_renderer(renderer)
+        {
+            float w,h;
+            SDL_GetTextureSize(texture.get(), &w, &h);
+            m_w = static_cast<int>(w);
+            m_h = static_cast<int>(h);
+        }
         virtual ~Drawable() = default;
         virtual auto draw() -> void = 0;
     protected:
         int m_x;
         int m_y;
+        int m_w;
+        int m_h;
 
-        const std::unique_ptr<SDL_Texture,TextureDestroyer>& m_texture;
+        const Texture& m_texture;
+
+        SDL_Renderer* m_renderer;
     };
 }
 

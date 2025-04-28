@@ -1,10 +1,10 @@
-#include "waiting_state.hpp"
+#include "waiting_scene.hpp"
 
 namespace Game
 {
-    WaitingState::WaitingState(Game &game) : m_game(game), m_clickables(), m_drawables() {}
+    WaitingScene::WaitingScene(Game &game) : m_game(game), m_clickables(), m_drawables() {}
 
-    auto WaitingState::enter() -> void
+    auto WaitingScene::enter() -> void
     {
         auto escape = [&game = this->m_game](const auto& event)
         {
@@ -22,7 +22,7 @@ namespace Game
         m_pressHandle = m_game.getEventDispatcher().subscribe<MousePressedEvent>(press);
     }
 
-    auto WaitingState::update() -> std::optional<std::unique_ptr<Scene>>
+    auto WaitingScene::update() -> std::optional<std::unique_ptr<Scene>>
     {
         if(m_mousePress.has_value())
         {
@@ -37,7 +37,7 @@ namespace Game
         return std::nullopt;
     }
 
-    auto WaitingState::render() -> void
+    auto WaitingScene::render() -> void
     {
         for(const auto& drawable : m_drawables)
         {
@@ -45,7 +45,7 @@ namespace Game
         }
     }
 
-    WaitingState::~WaitingState()
+    WaitingScene::~WaitingScene()
     {
         m_game.getEventDispatcher().unsubscribe<MousePressedEvent>(m_escapeHandle);
         m_game.getEventDispatcher().unsubscribe<MouseReleasedEvent>(m_pressHandle);
