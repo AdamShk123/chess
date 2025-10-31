@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">ChessAndroid</string>
+    
+    <!-- Login Screen -->
+    <string name="welcome_title">Rookie Chess</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Password</string>
+    <string name="login_button">Login</string>
+    <string name="or_text">OR</string>
+    <string name="continue_with_text">Continue with</string>
+    <string name="sign_in_google">Sign in with Google</string>
+    <string name="sign_in_facebook">Sign in with Facebook</string>
+
+    <!-- Auth0 Configuration -->
+    <string name="com_auth0_domain">dev-s85tbpsmrojxdyg0.us.auth0.com</string>
+    <string name="com_auth0_client_id">lrtBlc78Wfb2OTKJINa5WzC09x9xJPwj</string>
+    <string name="com_auth0_scheme">demo</string>
+</resources>
