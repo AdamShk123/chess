@@ -50,20 +50,21 @@ The app follows **Clean Architecture** principles with MVVM pattern:
 ### Layer Structure
 
 **Presentation Layer** (`ui/`):
-- **Screens**: Login, Home, Match History, Profile
-- **ViewModels**: Handle UI logic and state (e.g., `LoginViewModel`, `MatchHistoryViewModel`)
-- **UI States**: Immutable state classes (e.g., `LoginUiState`, `MatchHistoryUiState`)
+- **Screens**: Login, SignUp, Home, Match History, Profile
+- **ViewModels**: Handle UI logic and state (e.g., `LoginViewModel`, `SignUpViewModel`, `MatchHistoryViewModel`)
+- **UI States**: Immutable state classes (e.g., `LoginUiState`, `SignUpUiState`, `MatchHistoryUiState`)
 - **Navigation**: Type-safe navigation with sealed classes (`ChessNavigation.kt`)
 - **Theme**: Material 3 theming in `ui/theme/`
 
 **Data Layer** (`data/`):
 - **Repositories**: Data access abstraction
   - `IUserRepository` / `UserRepository` - User authentication and data
-    - Email/password login via Auth0
+    - Email/password login and signup via Auth0
     - Secure credential storage with automatic token refresh
     - Access token retrieval for authenticated API calls
   - `IMatchHistoryRepository` / `MatchHistoryRepository` - Match history data
 - **Interfaces**: Repository contracts for testability and flexibility
+- **Error Handling**: Auth0-specific error enums (`SignUpError`, `LoginError`) for user-friendly error messages
 
 **Dependency Injection** (`di/`):
 - **Hilt**: Dependency injection framework
@@ -82,7 +83,8 @@ The app follows **Clean Architecture** principles with MVVM pattern:
 
 ```
 Login Screen (start)
-    ↓ (on login success)
+    ├→ Sign Up Screen (back stack)
+    ↓ (on login/signup success)
 Home Screen
     ├→ Match History Screen (back stack)
     ├→ Profile Screen (back stack)
@@ -101,6 +103,7 @@ app/src/main/java/com/example/chessandroid/
 │   │   └── ChessNavigation.kt  # Route definitions
 │   ├── screens/
 │   │   ├── login/              # Login feature
+│   │   ├── signup/             # Sign up feature
 │   │   ├── home/               # Home screen
 │   │   ├── matchhistory/       # Match history with ViewModel
 │   │   └── profile/            # Profile screen
@@ -160,18 +163,20 @@ Dependencies are managed through Version Catalogs in `gradle/libs.versions.toml`
 ### Current Implementation Status
 
 - Single-activity architecture with Compose
-- Navigation system fully implemented with 4 screens
+- Navigation system fully implemented with 5 screens (Login, SignUp, Home, Match History, Profile)
 - Hilt dependency injection configured
 - Repository pattern with interfaces
 - ViewModels for state management
 - Material 3 theming with edge-to-edge display
 - Activity lifecycle logging for debugging
 - **Authentication**:
-  - Email/password login via Auth0 (fully implemented)
+  - Email/password login and signup via Auth0 (fully implemented)
   - Automatic credential check on app launch
   - Secure credential storage with encryption
   - Access token retrieval for API calls
+  - User-friendly error handling with Auth0-specific error enums
   - Google social login (planned, see `docs/google-login-implementation-plan.md`)
+  - Note: Email verification is disabled in Auth0 dashboard for this personal/resume project to reduce friction
 
 ### Code Style
 
@@ -181,7 +186,10 @@ Dependencies are managed through Version Catalogs in `gradle/libs.versions.toml`
 - ViewModels use Hilt for DI
 - Comprehensive lifecycle callbacks with logging
 - **Async Operations**: Use `suspendCancellableCoroutine` to bridge callback-based APIs (like Auth0) with Kotlin coroutines
-- **Error Handling**: Use `Result<T>` for repository methods to handle success/failure consistently
+- **Error Handling**:
+  - Use `Result<T>` for repository methods to handle success/failure consistently
+  - Use Auth0 error enums (`SignUpError`, `LoginError`) in ViewModels for user-friendly error messages
+  - Reference: https://auth0.com/docs/libraries/common-auth0-library-authentication-errors
 
 ### When Working on This Codebase
 
@@ -202,6 +210,13 @@ Dependencies are managed through Version Catalogs in `gradle/libs.versions.toml`
 
 **Testing**: Unit tests go in `app/src/test/`, instrumented tests in `app/src/androidTest/`
 
+**Auth0 Configuration**:
+- Database connection: "Username-Password-Authentication"
+- Grant types enabled: Password grant type (for native password authentication)
+- **Email Verification**: DISABLED in Auth0 dashboard
+  - Location: Auth0 Dashboard → Authentication → Database → Username-Password-Authentication → Settings
+  - This is a personal/resume project - email verification adds unnecessary friction
+
 **Authentication & API Calls**:
 - User credentials managed by `UserRepository`
 - Access tokens retrieved via `userRepository.getAccessToken()`
@@ -218,8 +233,15 @@ userRepository.getAccessToken()
     }
 ```
 
-**Login Flow**:
-- LoginViewModel checks for existing credentials on init
+**Authentication Flow**:
+- **LoginViewModel** checks for existing credentials on init
 - If valid credentials exist, user auto-navigates to Home
+- **SignUpViewModel** handles new user registration
+  - Validates email format and password strength (min 8 chars)
+  - Shows user-friendly error messages using `SignUpError` enum
+  - Handles "user already exists" errors gracefully
+- **LoginViewModel** handles authentication errors
+  - Shows user-friendly error messages using `LoginError` enum
+  - Handles invalid credentials, account blocks, and other Auth0 errors
 - Credentials persist across app restarts (encrypted via Android Keystore)
 - Logout clears credentials from secure storage

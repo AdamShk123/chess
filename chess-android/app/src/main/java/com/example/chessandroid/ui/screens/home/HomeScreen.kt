@@ -12,6 +12,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chessandroid.ui.theme.ChessAndroidTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,7 +23,8 @@ fun HomeScreen(
     onMatchHistory: () -> Unit = {},
     onLeaderboard: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onLogOut: () -> Unit = {}
+    onLogOut: () -> Unit = {},
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     Scaffold(
         topBar = {
@@ -130,7 +132,10 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = onLogOut,
+                onClick = {
+                    viewModel.logout()
+                    onLogOut()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

@@ -2,6 +2,8 @@ package com.example.chessandroid.ui.screens.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.auth0.android.authentication.AuthenticationException
+import com.example.chessandroid.data.auth.LoginError
 import com.example.chessandroid.data.repository.IUserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,10 +71,15 @@ class LoginViewModel @Inject constructor(
                     }
                 }
                 .onFailure { error ->
+                    val errorMsg = LoginError.getUserMessage(
+                        code = (error as? AuthenticationException)?.getCode(),
+                        defaultMessage = error.message ?: "Login failed"
+                    )
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = error.message ?: "Login failed"
+                            errorMessage = errorMsg
                         )
                     }
                 }

@@ -1,6 +1,7 @@
 package com.example.chessandroid.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.example.chessandroid.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -59,21 +60,38 @@ class UserRepository @Inject constructor(
     }
 
     override suspend fun login(email: String, password: String): Result<Unit> {
-        return suspendCancellableCoroutine { continuation ->
-            authClient.login(usernameOrEmail = email, password = password)
+        return try {
+            val credentials = authClient
+                .login(email, password, "Username-Password-Authentication")
                 .validateClaims()
-                .start(object: Callback<Credentials, AuthenticationException> {
-                    override fun onFailure(error: AuthenticationException) {
-                        continuation.resume(Result.failure(error))
-                    }
+                .await()
 
-                    override fun onSuccess(result: Credentials) {
-                        credentialsManager.saveCredentials(result)
-                        continuation.resume(Result.success(Unit))
-                    }
-                })
+            credentialsManager.saveCredentials(credentials)
+            Result.success(Unit)
+        } catch (e: AuthenticationException) {
+            Log.e("Auth0", "Login failed - Code: ${e.getCode()}, Description: ${e.getDescription()}", e)
+            Result.failure(e)
         }
     }
+
+    override suspend fun signUp(email: String, password: String): Result<Unit> {
+        return try {
+            authClient
+                .signUp(email = email, password = password, connection = "Username-Password-Authentication")
+                .await()
+
+            // Don't save credentials - user must verify email first
+            Log.d("Auth0", "Sign up successful, verification email sent to $email")
+            Result.success(Unit)
+        } catch (e: AuthenticationException) {
+            Log.e("Auth0", "Sign up failed - Code: ${e.getCode()}, Description: ${e.getDescription()}, StatusCode: ${e.statusCode}", e)
+            Result.failure(e)
+        }
+    }
+
+    // TODO: Implement resendVerificationEmail via backend API
+    // This requires calling the Auth0 Management API from the backend, not the mobile client
+    // override suspend fun resendVerificationEmail(email: String): Result<Unit>
 
     override fun logout() {
         credentialsManager.clearCredentials()

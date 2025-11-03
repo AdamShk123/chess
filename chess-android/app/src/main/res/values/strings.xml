@@ -10,6 +10,16 @@
     <string name="continue_with_text">Continue with</string>
     <string name="sign_in_google">Sign in with Google</string>
     <string name="sign_in_facebook">Sign in with Facebook</string>
+    <string name="dont_have_account">Don\'t have an account? Sign up</string>
+
+    <!-- Sign Up Screen -->
+    <string name="create_account_title">Create Account</string>
+    <string name="confirm_password_label">Confirm Password</string>
+    <string name="sign_up_button">Sign Up</string>
+    <string name="already_have_account">Already have an account? Login</string>
+
+    <!-- Common -->
+    <string name="back_button">Back</string>
 
     <!-- Auth0 Configuration -->
     <string name="com_auth0_domain">dev-s85tbpsmrojxdyg0.us.auth0.com</string>

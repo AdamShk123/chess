@@ -12,6 +12,7 @@ import com.example.chessandroid.ui.screens.leaderboard.LeaderboardScreen
 import com.example.chessandroid.ui.screens.login.LoginScreen
 import com.example.chessandroid.ui.screens.matchhistory.MatchHistoryScreen
 import com.example.chessandroid.ui.screens.profile.ProfileScreen
+import com.example.chessandroid.ui.screens.signup.SignUpScreen
 
 @Composable
 fun ChessApp() {
@@ -25,6 +26,29 @@ fun ChessApp() {
             composable(ChessRoute.Login.route) {
                 LoginScreen(
                     onLoginSuccess = {
+                        navController.navigate(ChessRoute.Home.route) {
+                            popUpTo(ChessRoute.Login.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToSignUp = {
+                        navController.navigate(ChessRoute.SignUp.route)
+                    }
+                )
+            }
+
+            composable(ChessRoute.SignUp.route) {
+                SignUpScreen(
+                    onSignUpSuccess = {
+                        navController.navigate(ChessRoute.Home.route) {
+                            popUpTo(ChessRoute.Login.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onGoogleSignIn = {
+                        // TODO: Implement Google Sign-In - same as LoginScreen
+                        // When implemented, will navigate to Home on success
                         navController.navigate(ChessRoute.Home.route) {
                             popUpTo(ChessRoute.Login.route) { inclusive = true }
                         }

@@ -24,6 +24,7 @@ import com.example.chessandroid.ui.theme.ChessAndroidTheme
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
+    onNavigateToSignUp: () -> Unit = {},
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -42,7 +43,8 @@ fun LoginScreen(
         onEmailChange = viewModel::onEmailChange,
         onPasswordChange = viewModel::onPasswordChange,
         onLoginClick = viewModel::onLoginClick,
-        onGoogleLogin = viewModel::onGoogleLogin
+        onGoogleLogin = viewModel::onGoogleLogin,
+        onNavigateToSignUp = onNavigateToSignUp
     )
 }
 
@@ -56,7 +58,8 @@ fun LoginScreenContent(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
-    onGoogleLogin: () -> Unit
+    onGoogleLogin: () -> Unit,
+    onNavigateToSignUp: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -96,6 +99,16 @@ fun LoginScreenContent(
         GoogleSignInButton(
             onClick = onGoogleLogin
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Sign Up Link
+        TextButton(onClick = onNavigateToSignUp) {
+            Text(
+                text = stringResource(R.string.dont_have_account),
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 
@@ -147,7 +160,10 @@ fun EmailPasswordLoginSection(
 
         Button(
             onClick = onLoginClick,
-            modifier = Modifier.widthIn(max = 488.dp).fillMaxWidth(),
+            modifier = Modifier
+                .widthIn(max = 488.dp)
+                .height(48.dp)
+                .fillMaxWidth(),
             enabled = !isLoading
         ) {
             if (isLoading) {
@@ -172,7 +188,7 @@ fun GoogleSignInButton(
             .widthIn(max = 488.dp)
             .fillMaxWidth()
             .height(48.dp),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(24.dp)
     ) {
         Icon(
             painter = painterResource(R.drawable.google),
@@ -222,7 +238,8 @@ fun LoginScreenPreview() {
             onEmailChange = {},
             onPasswordChange = {},
             onLoginClick = {},
-            onGoogleLogin = {}
+            onGoogleLogin = {},
+            onNavigateToSignUp = {}
         )
     }
 }
