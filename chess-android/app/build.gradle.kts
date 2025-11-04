@@ -62,6 +62,8 @@ dependencies {
     implementation(libs.auth0)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services)
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
