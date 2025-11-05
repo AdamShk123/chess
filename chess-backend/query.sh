@@ -1,0 +1,1 @@
+curl -s "http://localhost:8080/api/matches/me?pageNumber=0&pageSize=10&sort=createdAt,desc" | jq

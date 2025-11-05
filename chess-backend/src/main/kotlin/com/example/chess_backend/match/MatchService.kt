@@ -2,6 +2,8 @@ package com.example.chess_backend.match
 
 import com.example.chess_backend.user.UserNotFoundException
 import com.example.chess_backend.user.UserRepository
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
@@ -45,10 +47,14 @@ class MatchService(
         return matchRepository.save(updated)
     }
 
-    fun getMatchesByPlayer(playerId: Int): List<Match> {
+    fun getMatchesByPlayer(playerId: Int, pageable: Pageable): Page<Match> {
         if (!userRepository.existsById(playerId)) {
             throw UserNotFoundException(playerId)
         }
-        return matchRepository.findByWhitePlayerIdOrBlackPlayerId(playerId, playerId)
+        return matchRepository.findByWhitePlayerIdOrBlackPlayerId(
+            playerId,
+            playerId,
+            pageable
+        )
     }
 }
