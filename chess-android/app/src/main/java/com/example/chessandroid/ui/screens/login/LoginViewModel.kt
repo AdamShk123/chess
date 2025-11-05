@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.credentials.CreatePasswordRequest
 import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetPasswordOption
 import androidx.credentials.PasswordCredential
@@ -15,6 +16,8 @@ import androidx.lifecycle.viewModelScope
 import com.auth0.android.authentication.AuthenticationException
 import com.example.chessandroid.data.auth.LoginError
 import com.example.chessandroid.data.repository.IUserRepository
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +25,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.security.MessageDigest
+import java.security.SecureRandom
+import java.util.Base64
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,8 +39,39 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
+    // Store current nonce for Google Sign-In verification
+    private var currentNonce: String? = null
+
     init {
         checkForSavedCredentials()
+    }
+
+    /**
+     * Nonce utility functions for Google Sign-In security.
+     *
+     * SECURITY NOTE: The nonce prevents replay attacks by ensuring each
+     * Google ID token is unique. Auth0's loginWithNativeSocialToken()
+     * is assumed to validate nonces server-side, but this is not explicitly
+     * documented. For production apps with high security requirements,
+     * consider implementing backend nonce tracking or confirming with Auth0
+     * that they maintain a "seen nonces" database.
+     *
+     * See: docs/google-login-implementation-plan.md for detailed security analysis
+     *
+     * References:
+     * - Google: https://developer.android.com/identity/sign-in/credential-manager-siwg
+     * - Auth0: https://auth0.com/docs/authenticate/identity-providers/social-identity-providers/google-native
+     */
+    private fun generateNonce(): String {
+        val bytes = ByteArray(32)
+        SecureRandom().nextBytes(bytes)
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+    }
+
+    private fun hashNonce(nonce: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hash = digest.digest(nonce.toByteArray())
+        return hash.joinToString("") { "%02x".format(it) }
     }
 
     private fun checkForSavedCredentials() {
@@ -54,8 +91,20 @@ class LoginViewModel @Inject constructor(
 
             // Step 2: No Auth0 credentials - try system credentials
             try {
+                // Generate nonce for auto-login with Google if available
+                val autoLoginNonce = generateNonce()
+                val hashedAutoLoginNonce = hashNonce(autoLoginNonce)
+
+                val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(true)
+                    .setServerClientId(context.getString(com.example.chessandroid.R.string.google_web_client_id))
+                    .setAutoSelectEnabled(false)
+                    .setNonce(hashedAutoLoginNonce)
+                    .build()
+
                 val request = GetCredentialRequest.Builder()
                     .addCredentialOption(GetPasswordOption())
+                    .addCredentialOption(googleIdOption)
                     .build()
 
                 val result = credentialManager.getCredential(context, request)
@@ -65,8 +114,50 @@ class LoginViewModel @Inject constructor(
                         // User selected saved password - auto-login
                         autoLogin(credential.id, credential.password)
                     }
+                    is CustomCredential -> {
+                        // Google credential comes as CustomCredential
+                        if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                            try {
+                                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                val idToken = googleIdTokenCredential.idToken
+
+                                Log.d("CredentialManager", "Auto-login with Google")
+                                userRepository.loginWithGoogle(idToken)
+                                    .onSuccess {
+                                        _uiState.update {
+                                            it.copy(
+                                                isLoading = false,
+                                                isLoggedIn = true
+                                            )
+                                        }
+                                    }
+                                    .onFailure { error ->
+                                        Log.e("CredentialManager", "Google auto-login failed", error)
+                                        _uiState.update {
+                                            it.copy(
+                                                isLoading = false,
+                                                showLoginForm = true,
+                                                errorMessage = "Google sign-in failed. Please try again."
+                                            )
+                                        }
+                                    }
+                            } catch (e: Exception) {
+                                Log.e("CredentialManager", "Failed to parse Google credential", e)
+                                _uiState.update {
+                                    it.copy(
+                                        isLoading = false,
+                                        showLoginForm = true,
+                                        errorMessage = "Failed to process Google credential."
+                                    )
+                                }
+                            }
+                        } else {
+                            Log.w("CredentialManager", "Unknown custom credential type: ${credential.type}")
+                            _uiState.update { it.copy(isLoading = false, showLoginForm = true) }
+                        }
+                    }
                 }
-            } catch (e: NoCredentialException) {
+            } catch (_: NoCredentialException) {
                 // No saved credentials - show manual login form
                 Log.d("CredentialManager", "No saved credentials found")
                 _uiState.update { it.copy(isLoading = false, showLoginForm = true) }
@@ -197,19 +288,83 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    fun onGoogleLogin() {
-        // TODO: Implement Google Sign-In
+    fun onGoogleLogin(activity: Context) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // Placeholder implementation
-            kotlinx.coroutines.delay(1000)
+            try {
+                // Step 1: Generate nonce for security
+                currentNonce = generateNonce()
+                val hashedNonce = hashNonce(currentNonce!!)
 
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isLoggedIn = true
-                )
+                Log.d("GoogleSignIn", "Generated nonce, requesting Google ID token")
+
+                // Step 2: Build Google ID option with nonce
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(context.getString(com.example.chessandroid.R.string.google_web_client_id))
+                    .setNonce(hashedNonce)
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                // Step 3: Get Google ID token via Credential Manager
+                val result = credentialManager.getCredential(activity, request)
+                val credential = result.credential
+
+                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                val idToken = googleIdTokenCredential.idToken
+
+                Log.d("GoogleSignIn", "Google ID Token obtained, exchanging with Auth0")
+
+                // Step 4: Login with Google via repository
+                userRepository.loginWithGoogle(idToken)
+                    .onSuccess {
+                        Log.d("GoogleSignIn", "Google login successful")
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isLoggedIn = true,
+                                errorMessage = ""
+                            )
+                        }
+                    }
+                    .onFailure { error ->
+                        Log.e("GoogleSignIn", "Google login failed", error)
+                        val errorMsg = LoginError.getUserMessage(
+                            code = (error as? AuthenticationException)?.getCode(),
+                            defaultMessage = error.message ?: "Google sign-in failed"
+                        )
+
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = errorMsg
+                            )
+                        }
+                    }
+            } catch (e: GetCredentialException) {
+                Log.e("GoogleSignIn", "Failed to get Google credential", e)
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = when {
+                            e.message?.contains("cancelled", ignoreCase = true) == true ->
+                                "Google sign-in cancelled"
+                            else -> "Google sign-in failed: ${e.message}"
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("GoogleSignIn", "Unexpected error during Google sign-in", e)
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Google sign-in failed: ${e.message}"
+                    )
+                }
             }
         }
     }

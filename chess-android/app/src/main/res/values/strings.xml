@@ -25,4 +25,7 @@
     <string name="com_auth0_domain">dev-s85tbpsmrojxdyg0.us.auth0.com</string>
     <string name="com_auth0_client_id">lrtBlc78Wfb2OTKJINa5WzC09x9xJPwj</string>
     <string name="com_auth0_scheme">demo</string>
+
+    <!-- Google Sign-In Configuration -->
+    <string name="google_web_client_id">796228927109-qfjvt7hkt135a6k66tfjjstiuvq144s8.apps.googleusercontent.com</string>
 </resources>

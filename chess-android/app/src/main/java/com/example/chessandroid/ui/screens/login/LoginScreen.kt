@@ -44,10 +44,11 @@ fun LoginScreen(
         password = uiState.password,
         isLoading = uiState.isLoading,
         errorMessage = uiState.errorMessage,
+        showLoginForm = uiState.showLoginForm,
         onEmailChange = viewModel::onEmailChange,
         onPasswordChange = viewModel::onPasswordChange,
         onLoginClick = { activity?.let { viewModel.onLoginClick(it) } },
-        onGoogleLogin = viewModel::onGoogleLogin,
+        onGoogleLogin = { activity?.let { viewModel.onGoogleLogin(it) } },
         onNavigateToSignUp = onNavigateToSignUp
     )
 }
@@ -59,6 +60,7 @@ fun LoginScreenContent(
     password: String,
     isLoading: Boolean,
     errorMessage: String,
+    showLoginForm: Boolean,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
@@ -239,6 +241,7 @@ fun LoginScreenPreview() {
             password = "",
             isLoading = false,
             errorMessage = "",
+            showLoginForm = true,
             onEmailChange = {},
             onPasswordChange = {},
             onLoginClick = {},

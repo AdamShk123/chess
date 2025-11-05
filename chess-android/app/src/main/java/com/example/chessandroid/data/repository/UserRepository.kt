@@ -89,9 +89,22 @@ class UserRepository @Inject constructor(
         }
     }
 
-    // TODO: Implement resendVerificationEmail via backend API
-    // This requires calling the Auth0 Management API from the backend, not the mobile client
-    // override suspend fun resendVerificationEmail(email: String): Result<Unit>
+    override suspend fun loginWithGoogle(idToken: String): Result<Unit> {
+        return try {
+            // Exchange Google ID token with Auth0 for Auth0 credentials
+            // Token type must be the full URI as specified in Auth0 docs
+            val credentials = authClient
+                .loginWithNativeSocialToken(idToken, "http://auth0.com/oauth/token-type/google-id-token")
+                .await()
+
+            credentialsManager.saveCredentials(credentials)
+            Log.d("Auth0", "Google login successful, credentials saved")
+            Result.success(Unit)
+        } catch (e: AuthenticationException) {
+            Log.e("Auth0", "Google login failed - Code: ${e.getCode()}, Description: ${e.getDescription()}", e)
+            Result.failure(e)
+        }
+    }
 
     override fun logout() {
         credentialsManager.clearCredentials()

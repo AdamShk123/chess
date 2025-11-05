@@ -3,7 +3,6 @@ package com.example.chessandroid.ui.screens.signup
 import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -12,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -28,7 +26,6 @@ import com.example.chessandroid.ui.theme.ChessAndroidTheme
 fun SignUpScreen(
     onSignUpSuccess: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
-    onGoogleSignIn: () -> Unit = {},
     viewModel: SignUpViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -52,8 +49,7 @@ fun SignUpScreen(
         onPasswordChange = viewModel::onPasswordChange,
         onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
         onSignUpClick = { activity?.let { viewModel.onSignUpClick(it) } },
-        onNavigateBack = onNavigateBack,
-        onGoogleSignIn = onGoogleSignIn
+        onNavigateBack = onNavigateBack
     )
 }
 
@@ -69,8 +65,7 @@ fun SignUpScreenContent(
     onPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onSignUpClick: () -> Unit,
-    onNavigateBack: () -> Unit,
-    onGoogleSignIn: () -> Unit
+    onNavigateBack: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -176,52 +171,6 @@ fun SignUpScreenContent(
                 Text(stringResource(R.string.sign_up_button))
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Divider
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.outline
-                )
-                Text(
-                    text = stringResource(R.string.or_text),
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 14.sp
-                )
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Google Sign-in Button
-            OutlinedButton(
-                onClick = onGoogleSignIn,
-                modifier = Modifier
-                    .widthIn(max = 488.dp)
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.google),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.sign_in_google),
-                    fontSize = 16.sp
-                )
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
 
             // Already have account text
@@ -249,8 +198,7 @@ fun SignUpScreenPreview() {
             onPasswordChange = {},
             onConfirmPasswordChange = {},
             onSignUpClick = {},
-            onNavigateBack = {},
-            onGoogleSignIn = {}
+            onNavigateBack = {}
         )
     }
 }
