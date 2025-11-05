@@ -68,4 +68,13 @@ class GlobalExceptionHandler {
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
     }
+
+    @ExceptionHandler(ForbiddenException::class)
+    fun handleForbidden(ex: ForbiddenException): ResponseEntity<ErrorResponse> {
+        val error = ErrorResponse(
+            error = ErrorCode.FORBIDDEN,
+            message = ex.message ?: "You do not have permission to perform this action"
+        )
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error)
+    }
 }

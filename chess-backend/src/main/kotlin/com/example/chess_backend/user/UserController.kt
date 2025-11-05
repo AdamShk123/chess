@@ -1,6 +1,7 @@
 package com.example.chess_backend.user
 
 import com.example.chess_backend.auth.AuthenticationService
+import com.example.chess_backend.common.ForbiddenException
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -47,14 +48,26 @@ class UserController(
     @PutMapping("/{id}")
     fun updateUser(
         @PathVariable id: Int,
-        @Valid @RequestBody request: UpdateUserRequest
+        @Valid @RequestBody request: UpdateUserRequest,
+        @AuthenticationPrincipal jwt: Jwt?
     ): ResponseEntity<UserResponse> {
+        val currentUser = authenticationService.getCurrentUser(jwt)
+        if (currentUser.id != id) {
+            throw ForbiddenException("You can only update your own profile")
+        }
         val user = userService.updateUser(id, request.name, request.email)
         return ResponseEntity.ok(user.toResponse())
     }
 
     @DeleteMapping("/{id}")
-    fun deleteUser(@PathVariable id: Int): ResponseEntity<Void> {
+    fun deleteUser(
+        @PathVariable id: Int,
+        @AuthenticationPrincipal jwt: Jwt?
+    ): ResponseEntity<Void> {
+        val currentUser = authenticationService.getCurrentUser(jwt)
+        if (currentUser.id != id) {
+            throw ForbiddenException("You can only delete your own account")
+        }
         userService.deleteUser(id)
         return ResponseEntity.noContent().build()
     }
