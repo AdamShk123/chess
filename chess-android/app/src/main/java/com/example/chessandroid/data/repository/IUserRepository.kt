@@ -34,14 +34,6 @@ interface IUserRepository {
      */
     suspend fun loginWithGoogle(idToken: String): Result<Unit>
 
-    // TODO: Implement resendVerificationEmail via backend API
-    // Auth0's Management API is required to resend verification emails, which should be called
-    // from the backend for security. The backend endpoint should:
-    // 1. Accept user email
-    // 2. Look up user ID from Auth0
-    // 3. Call Management API: POST /api/v2/jobs/verification-email
-    // suspend fun resendVerificationEmail(email: String): Result<Unit>
-
     /**
      * Logout the current user
      */

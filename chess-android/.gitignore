@@ -16,3 +16,4 @@ local.properties
 .idea/
 app/android-chess-client.txt
 app/web-chess-client.txt
+docs/

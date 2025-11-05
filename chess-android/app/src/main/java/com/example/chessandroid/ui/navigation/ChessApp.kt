@@ -45,13 +45,6 @@ fun ChessApp() {
                     },
                     onNavigateBack = {
                         navController.popBackStack()
-                    },
-                    onGoogleSignIn = {
-                        // TODO: Implement Google Sign-In - same as LoginScreen
-                        // When implemented, will navigate to Home on success
-                        navController.navigate(ChessRoute.Home.route) {
-                            popUpTo(ChessRoute.Login.route) { inclusive = true }
-                        }
                     }
                 )
             }

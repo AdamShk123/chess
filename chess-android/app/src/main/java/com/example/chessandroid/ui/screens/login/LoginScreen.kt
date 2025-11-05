@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chessandroid.R
 import com.example.chessandroid.ui.theme.ChessAndroidTheme
@@ -138,7 +140,11 @@ fun EmailPasswordLoginSection(
             label = { Text(stringResource(R.string.email_label)) },
             modifier = Modifier.widthIn(max = 488.dp).fillMaxWidth(),
             singleLine = true,
-            enabled = !isLoading
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Email
+            )
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -150,7 +156,12 @@ fun EmailPasswordLoginSection(
             modifier = Modifier.widthIn(max = 488.dp).fillMaxWidth(),
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Unspecified,
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Unspecified
+            ),
             enabled = !isLoading
         )
 
