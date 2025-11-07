@@ -11,9 +11,7 @@ data class ChessMatch(
     val opponent: String,
     val result: MatchResult,
     val playerColor: PlayerColor,
-    val date: LocalDateTime,
-    val moves: Int,
-    val duration: String // e.g., "15:30"
+    val date: LocalDateTime
 ) {
     val formattedDate: String
         get() = date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))

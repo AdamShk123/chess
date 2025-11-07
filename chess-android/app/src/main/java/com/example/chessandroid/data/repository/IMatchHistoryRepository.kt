@@ -1,14 +1,15 @@
 package com.example.chessandroid.data.repository
 
-import com.example.chessandroid.ui.screens.matchhistory.ChessMatch
-
 /**
  * Interface for match history repository
  * Defines the contract for fetching match history data
  */
 interface IMatchHistoryRepository {
     /**
-     * Fetches match history for the current user
+     * Fetches a page of match history for the current user
+     * @param pageNumber Zero-indexed page number
+     * @param pageSize Number of matches per page
+     * @return Result containing MatchHistoryPage with matches and pagination metadata
      */
-    suspend fun getMatchHistory(): Result<List<ChessMatch>>
+    suspend fun getMatchHistory(pageNumber: Int, pageSize: Int): Result<MatchHistoryPage>
 }

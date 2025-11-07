@@ -28,4 +28,9 @@
 
     <!-- Google Sign-In Configuration -->
     <string name="google_web_client_id">796228927109-qfjvt7hkt135a6k66tfjjstiuvq144s8.apps.googleusercontent.com</string>
+
+    <!-- API Configuration -->
+    <!-- For emulator: use 10.0.2.2 to reach host machine localhost -->
+    <!-- For physical device: use your computer's IP address -->
+    <string name="api_base_url">http://10.0.2.2:8080</string>
 </resources>

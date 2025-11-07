@@ -6,5 +6,8 @@ package com.example.chessandroid.ui.screens.matchhistory
 data class MatchHistoryUiState(
     val matches: List<ChessMatch> = emptyList(),
     val isLoading: Boolean = false,
-    val errorMessage: String = ""
+    val errorMessage: String = "",
+    val currentPage: Int = 0,
+    val totalPages: Int = 0,
+    val pageSize: Int = 10
 )

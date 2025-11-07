@@ -27,17 +27,21 @@ class MatchHistoryViewModel @Inject constructor(
     }
 
     /**
-     * Loads match history from the repository
+     * Loads a specific page of match history from the repository
      */
-    fun loadMatchHistory() {
+    private fun loadMatchHistory(pageNumber: Int = 0) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = "") }
 
-            repository.getMatchHistory()
-                .onSuccess { matches ->
+            val pageSize = _uiState.value.pageSize
+            repository.getMatchHistory(pageNumber = pageNumber, pageSize = pageSize)
+                .onSuccess { page ->
                     _uiState.update {
                         it.copy(
-                            matches = matches,
+                            matches = page.matches,
+                            currentPage = page.currentPage,
+                            totalPages = page.totalPages,
+                            pageSize = page.pageSize,
                             isLoading = false,
                             errorMessage = ""
                         )
@@ -55,9 +59,39 @@ class MatchHistoryViewModel @Inject constructor(
     }
 
     /**
-     * Refreshes the match history
+     * Refreshes the current page of match history
      */
     fun refresh() {
-        loadMatchHistory()
+        loadMatchHistory(_uiState.value.currentPage)
+    }
+
+    /**
+     * Navigates to the previous page
+     */
+    fun previousPage() {
+        val currentPage = _uiState.value.currentPage
+        if (currentPage > 0) {
+            loadMatchHistory(currentPage - 1)
+        }
+    }
+
+    /**
+     * Navigates to the next page
+     */
+    fun nextPage() {
+        val currentPage = _uiState.value.currentPage
+        val totalPages = _uiState.value.totalPages
+        if (currentPage < totalPages - 1) {
+            loadMatchHistory(currentPage + 1)
+        }
+    }
+
+    /**
+     * Navigates to a specific page
+     */
+    fun selectPage(pageNumber: Int) {
+        if (pageNumber != _uiState.value.currentPage) {
+            loadMatchHistory(pageNumber)
+        }
     }
 }

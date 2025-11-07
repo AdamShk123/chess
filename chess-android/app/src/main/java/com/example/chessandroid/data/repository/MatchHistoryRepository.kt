@@ -1,86 +1,53 @@
 package com.example.chessandroid.data.repository
 
-import com.example.chessandroid.ui.screens.matchhistory.ChessMatch
-import com.example.chessandroid.ui.screens.matchhistory.MatchResult
-import com.example.chessandroid.ui.screens.matchhistory.PlayerColor
-import kotlinx.coroutines.delay
-import java.time.LocalDateTime
+import com.example.chessandroid.data.api.ChessApiService
+import com.example.chessandroid.data.api.mapper.toChessMatch
+import javax.inject.Inject
 
 /**
  * Repository for managing match history data
- * This will handle data fetching from remote/local sources
+ * Fetches match data from the backend API
  */
-class MatchHistoryRepository : IMatchHistoryRepository {
+class MatchHistoryRepository @Inject constructor(
+    private val apiService: ChessApiService,
+    private val userRepository: IUserRepository
+) : IMatchHistoryRepository {
 
     /**
-     * Fetches match history for the current user
-     * TODO: Replace with actual API call or database query
+     * Fetches a page of match history for the current user from the backend API
+     * @param pageNumber Zero-indexed page number
+     * @param pageSize Number of matches per page
+     * @return Result containing MatchHistoryPage with matches and pagination metadata
      */
-    override suspend fun getMatchHistory(): Result<List<ChessMatch>> {
+    override suspend fun getMatchHistory(pageNumber: Int, pageSize: Int): Result<MatchHistoryPage> {
         return try {
-            // Simulate network delay
-            delay(500)
+            // Get access token for authentication
+            val token = userRepository.getAccessToken().getOrThrow()
+            val authHeader = "Bearer $token"
 
-            // For now, return mock data
-            // In production, this would fetch from an API or local database
-            val matches = listOf(
-                ChessMatch(
-                    id = "1",
-                    opponent = "GrandMaster99",
-                    result = MatchResult.WIN,
-                    playerColor = PlayerColor.WHITE,
-                    date = LocalDateTime.now().minusDays(1),
-                    moves = 52,
-                    duration = "18:45"
-                ),
-                ChessMatch(
-                    id = "2",
-                    opponent = "ChessNinja",
-                    result = MatchResult.LOSS,
-                    playerColor = PlayerColor.BLACK,
-                    date = LocalDateTime.now().minusDays(2),
-                    moves = 38,
-                    duration = "12:20"
-                ),
-                ChessMatch(
-                    id = "3",
-                    opponent = "RookiePlayer",
-                    result = MatchResult.DRAW,
-                    playerColor = PlayerColor.WHITE,
-                    date = LocalDateTime.now().minusDays(3),
-                    moves = 67,
-                    duration = "25:10"
-                ),
-                ChessMatch(
-                    id = "4",
-                    opponent = "KnightRider",
-                    result = MatchResult.WIN,
-                    playerColor = PlayerColor.BLACK,
-                    date = LocalDateTime.now().minusDays(5),
-                    moves = 41,
-                    duration = "14:35"
-                ),
-                ChessMatch(
-                    id = "5",
-                    opponent = "QueenSlayer",
-                    result = MatchResult.LOSS,
-                    playerColor = PlayerColor.WHITE,
-                    date = LocalDateTime.now().minusDays(7),
-                    moves = 29,
-                    duration = "09:15"
-                ),
-                ChessMatch(
-                    id = "6",
-                    opponent = "KingSlayer",
-                    result = MatchResult.WIN,
-                    playerColor = PlayerColor.WHITE,
-                    date = LocalDateTime.now().minusDays(8),
-                    moves = 29,
-                    duration = "09:15"
-                )
+            // Get current user to determine player ID for mapping
+            val currentUser = apiService.getCurrentUser(authHeader)
+
+            // Fetch the requested page
+            val pageResponse = apiService.getMyMatches(
+                authorization = authHeader,
+                pageNumber = pageNumber,
+                pageSize = pageSize
             )
 
-            Result.success(matches)
+            // Map matches and create page with metadata
+            val matches = pageResponse.content.map { it.toChessMatch(currentUser.id) }
+            val matchHistoryPage = MatchHistoryPage(
+                matches = matches,
+                currentPage = pageResponse.number,
+                totalPages = pageResponse.totalPages,
+                totalElements = pageResponse.totalElements,
+                pageSize = pageResponse.size,
+                isFirst = pageResponse.first,
+                isLast = pageResponse.last
+            )
+
+            Result.success(matchHistoryPage)
         } catch (e: Exception) {
             Result.failure(e)
         }

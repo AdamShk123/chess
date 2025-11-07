@@ -3,7 +3,9 @@ package com.example.chessandroid.ui.screens.matchhistory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,7 +16,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -22,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chessandroid.ui.theme.ChessAndroidTheme
 import java.time.LocalDateTime
+import com.example.chessandroid.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +40,10 @@ fun MatchHistoryScreen(
     MatchHistoryContent(
         uiState = uiState,
         onBackClick = onBackClick,
-        onRefresh = { viewModel.refresh() }
+        onRefresh = { viewModel.refresh() },
+        onPreviousPage = { viewModel.previousPage() },
+        onNextPage = { viewModel.nextPage() },
+        onSelectPage = { viewModel.selectPage(it) }
     )
 }
 
@@ -43,7 +52,10 @@ fun MatchHistoryScreen(
 fun MatchHistoryContent(
     uiState: MatchHistoryUiState,
     onBackClick: () -> Unit = {},
-    onRefresh: () -> Unit = {}
+    onRefresh: () -> Unit = {},
+    onPreviousPage: () -> Unit = {},
+    onNextPage: () -> Unit = {},
+    onSelectPage: (Int) -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -68,6 +80,76 @@ fun MatchHistoryContent(
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
+        },
+        bottomBar = {
+            if (uiState.matches.isNotEmpty() && uiState.totalPages > 1) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = onPreviousPage,
+                        enabled = uiState.currentPage != 0,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_backward),
+                            contentDescription = "Previous Page"
+                        )
+                    }
+                    LazyRow(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        items((0..<uiState.totalPages).toList()) { page ->
+                            val isCurrentPage = page == uiState.currentPage
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        color = if (isCurrentPage) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            Color.Transparent
+                                        }
+                                    )
+                            ) {
+                                TextButton(
+                                    onClick = { if (!isCurrentPage) onSelectPage(page) },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = if (isCurrentPage) {
+                                            MaterialTheme.colorScheme.onPrimary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        }
+                                    ),
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(0.dp)
+                                ) {
+                                    Text(
+                                        text = "${page + 1}",
+                                        fontWeight = if (isCurrentPage) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    IconButton(
+                        onClick = onNextPage,
+                        enabled = uiState.currentPage != uiState.totalPages - 1,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_forward),
+                            contentDescription = "Next Page"
+                        )
+                    }
+                }
+            }
         }
     ) { paddingValues ->
         PullToRefreshBox(
@@ -220,14 +302,6 @@ fun MatchHistoryItem(
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = "${match.moves} moves · ${match.duration}",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
             // Right side: Result badge
@@ -277,7 +351,9 @@ fun MatchHistoryScreenEmptyPreview() {
 fun MatchHistoryScreenPreview() {
     ChessAndroidTheme {
         MatchHistoryContent(
-            uiState = MatchHistoryUiState(matches = getSampleMatches())
+            uiState = MatchHistoryUiState(
+                matches = getSampleMatches(),
+                totalPages = 2),
         )
     }
 }
@@ -292,9 +368,7 @@ fun MatchHistoryItemPreview() {
                 opponent = "Player123",
                 result = MatchResult.WIN,
                 playerColor = PlayerColor.WHITE,
-                date = LocalDateTime.now(),
-                moves = 45,
-                duration = "15:30"
+                date = LocalDateTime.now()
             )
         )
     }
@@ -308,54 +382,28 @@ fun getSampleMatches(): List<ChessMatch> {
             opponent = "GrandMaster99",
             result = MatchResult.WIN,
             playerColor = PlayerColor.WHITE,
-            date = LocalDateTime.now().minusDays(1),
-            moves = 52,
-            duration = "18:45"
+            date = LocalDateTime.now().minusDays(1)
         ),
         ChessMatch(
             id = "2",
             opponent = "ChessNinja",
             result = MatchResult.LOSS,
             playerColor = PlayerColor.BLACK,
-            date = LocalDateTime.now().minusDays(2),
-            moves = 38,
-            duration = "12:20"
+            date = LocalDateTime.now().minusDays(2)
         ),
         ChessMatch(
             id = "3",
             opponent = "RookiePlayer",
             result = MatchResult.DRAW,
             playerColor = PlayerColor.WHITE,
-            date = LocalDateTime.now().minusDays(3),
-            moves = 67,
-            duration = "25:10"
+            date = LocalDateTime.now().minusDays(3)
         ),
         ChessMatch(
             id = "4",
             opponent = "KnightRider",
             result = MatchResult.WIN,
             playerColor = PlayerColor.BLACK,
-            date = LocalDateTime.now().minusDays(5),
-            moves = 41,
-            duration = "14:35"
-        ),
-        ChessMatch(
-            id = "5",
-            opponent = "QueenSlayer",
-            result = MatchResult.LOSS,
-            playerColor = PlayerColor.WHITE,
-            date = LocalDateTime.now().minusDays(7),
-            moves = 29,
-            duration = "09:15"
-        ),
-        ChessMatch(
-            id = "6",
-            opponent = "KingSlayer",
-            result = MatchResult.WIN,
-            playerColor = PlayerColor.WHITE,
-            date = LocalDateTime.now().minusDays(8),
-            moves = 29,
-            duration = "09:15"
+            date = LocalDateTime.now().minusDays(5)
         )
     )
 }
