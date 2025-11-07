@@ -1,6 +1,7 @@
 package com.example.chessandroid.ui.screens.matchhistory
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chessandroid.ui.theme.ChessAndroidTheme
+import com.example.chessandroid.ui.theme.chessColors
 import java.time.LocalDateTime
 import com.example.chessandroid.R
 
@@ -252,7 +254,13 @@ fun MatchHistoryItem(
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContentColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
             modifier = Modifier
@@ -279,14 +287,12 @@ fun MatchHistoryItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Color indicator
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .background(
-                                color = if (match.playerColor == PlayerColor.WHITE) Color.White else Color.Black,
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                    )
+                    Surface(
+                        modifier = Modifier.size(16.dp),
+                        color = if (match.playerColor == PlayerColor.WHITE) Color.White else Color.Black,
+                        shape = RoundedCornerShape(4.dp),
+                        shadowElevation = 4.dp
+                    ) {}
 
                     Text(
                         text = match.playerColor.displayName,
@@ -316,9 +322,9 @@ fun ResultBadge(
     modifier: Modifier = Modifier
 ) {
     val (backgroundColor, textColor) = when (result) {
-        MatchResult.WIN -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
-        MatchResult.LOSS -> MaterialTheme.colorScheme.error to MaterialTheme.colorScheme.onError
-        MatchResult.DRAW -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.onTertiary
+        MatchResult.WIN -> MaterialTheme.chessColors.winBackground to MaterialTheme.chessColors.onWinBackground
+        MatchResult.LOSS -> MaterialTheme.chessColors.loseBackground to MaterialTheme.chessColors.onLoseBackground
+        MatchResult.DRAW -> MaterialTheme.chessColors.drawBackground to MaterialTheme.chessColors.onDrawBackground
     }
 
     Surface(
