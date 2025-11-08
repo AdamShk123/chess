@@ -16,8 +16,8 @@ val ChessOnSurface = Color(0xFF2C2C2C)  // Black text on surface
 
 val ChessError = Color(0xFFB00020)  // Deep red for errors
 
-val ChessWinBackground = Color(0xFF00FF00)  // Green for winning
+val ChessWinBackground = Color(0xFF57EA57)  // Green for winning
 
-val ChessDrawBackground = Color(0xFFFFE500)  // Yellow for draws
+val ChessDrawBackground = Color(0xFFECD865)  // Yellow for draws
 
-val ChessLoseBackground = Color(0xFFFF0000)
+val ChessLoseBackground = Color(0xFFEF5353)

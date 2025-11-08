@@ -10,17 +10,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,7 +35,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chessandroid.ui.theme.ChessAndroidTheme
 import com.example.chessandroid.ui.theme.chessColors
 import java.time.LocalDateTime
-import com.example.chessandroid.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +50,9 @@ fun MatchHistoryScreen(
         onRefresh = { viewModel.refresh() },
         onPreviousPage = { viewModel.previousPage() },
         onNextPage = { viewModel.nextPage() },
-        onSelectPage = { viewModel.selectPage(it) }
+        onSelectPage = { viewModel.selectPage(it) },
+        onChangePageSize = { viewModel.changePageSize(it) },
+        onChangeSortOrder = { viewModel.changeSortOrder(it) }
     )
 }
 
@@ -57,7 +64,9 @@ fun MatchHistoryContent(
     onRefresh: () -> Unit = {},
     onPreviousPage: () -> Unit = {},
     onNextPage: () -> Unit = {},
-    onSelectPage: (Int) -> Unit = {}
+    onSelectPage: (Int) -> Unit = {},
+    onChangePageSize: (Int) -> Unit = {},
+    onChangeSortOrder: (SortOrder) -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -96,7 +105,7 @@ fun MatchHistoryContent(
                         enabled = uiState.currentPage != 0,
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.arrow_backward),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Previous Page"
                         )
                     }
@@ -146,7 +155,7 @@ fun MatchHistoryContent(
                         enabled = uiState.currentPage != uiState.totalPages - 1,
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.arrow_forward),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "Next Page"
                         )
                     }
@@ -175,15 +184,26 @@ fun MatchHistoryContent(
                     )
                 }
                 else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(uiState.matches) { match ->
-                            MatchHistoryItem(
-                                match = match
-                            )
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Filter bar
+                        FilterBar(
+                            pageSize = uiState.pageSize,
+                            sortOrder = uiState.sortOrder,
+                            onChangePageSize = onChangePageSize,
+                            onChangeSortOrder = onChangeSortOrder
+                        )
+
+                        // Match list
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(uiState.matches) { match ->
+                                MatchHistoryItem(
+                                    match = match
+                                )
+                            }
                         }
                     }
                 }
@@ -312,6 +332,106 @@ fun MatchHistoryItem(
 
             // Right side: Result badge
             ResultBadge(result = match.result)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FilterBar(
+    pageSize: Int,
+    sortOrder: SortOrder,
+    onChangePageSize: (Int) -> Unit,
+    onChangeSortOrder: (SortOrder) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showPageSizeMenu by remember { mutableStateOf(false) }
+    val pageSizeOptions = listOf(5, 10, 25, 50)
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Page size dropdown
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Per page:",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Box {
+                    OutlinedButton(
+                        onClick = { showPageSizeMenu = true },
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Text(text = "$pageSize", fontSize = 14.sp)
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Select page size",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showPageSizeMenu,
+                        onDismissRequest = { showPageSizeMenu = false }
+                    ) {
+                        pageSizeOptions.forEach { size ->
+                            DropdownMenuItem(
+                                text = { Text("$size") },
+                                onClick = {
+                                    onChangePageSize(size)
+                                    showPageSizeMenu = false
+                                },
+                                leadingIcon = if (size == pageSize) {
+                                    { Icon(Icons.Default.Check, contentDescription = null) }
+                                } else null
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Sort toggle
+            FilterChip(
+                selected = sortOrder == SortOrder.NEWEST_FIRST,
+                onClick = {
+                    onChangeSortOrder(
+                        if (sortOrder == SortOrder.NEWEST_FIRST) SortOrder.OLDEST_FIRST
+                        else SortOrder.NEWEST_FIRST
+                    )
+                },
+                label = { Text(sortOrder.displayName, fontSize = 14.sp) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = if (sortOrder == SortOrder.NEWEST_FIRST)
+                            Icons.Default.ArrowDownward
+                        else
+                            Icons.Default.ArrowUpward,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                colors = FilterChipDefaults
+                    .filterChipColors()
+                    .copy(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = MaterialTheme.colorScheme.surface)
+            )
         }
     }
 }

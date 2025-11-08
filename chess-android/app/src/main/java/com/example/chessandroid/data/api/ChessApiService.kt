@@ -22,8 +22,8 @@ interface ChessApiService {
     @GET("/api/matches/me")
     suspend fun getMyMatches(
         @Header("Authorization") authorization: String,
-        @Query("pageNumber") pageNumber: Int = 0,
-        @Query("pageSize") pageSize: Int = 10,
+        @Query("page") pageNumber: Int = 0,
+        @Query("size") pageSize: Int = 10,
         @Query("sort") sort: String = "createdAt,desc"
     ): PageResponse<MatchResponseDto>
 
