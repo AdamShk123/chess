@@ -40,6 +40,12 @@ class DataLoader(
             auth0Id = "auth0|charlie-demo"
         ))
 
+        userRepository.save(User(
+            name = "Adam",
+            email = "adam.shkolnik@outlook.com",
+            auth0Id = "auth0|6909213e0bd9c60607317a9f"
+        ))
+
         // Create matches
         matchRepository.save(Match(
             whitePlayer = alice,
@@ -62,6 +68,6 @@ class DataLoader(
             result = MatchResult.ONGOING
         ))
 
-        println("✅ Sample data loaded successfully!")
+        println("Sample data loaded successfully!")
     }
 }

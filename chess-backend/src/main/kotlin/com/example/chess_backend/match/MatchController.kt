@@ -21,7 +21,7 @@ class MatchController(
     @GetMapping("/me")
     fun getMyMatches(
         @AuthenticationPrincipal jwt: Jwt?,
-        @PageableDefault(size = 10, sort = ["createdAt"], direction = Sort.Direction.DESC)
+        @PageableDefault(page = 0, size = 10, sort = ["createdAt"], direction = Sort.Direction.DESC)
         pageable: Pageable
     ): ResponseEntity<Page<MatchResponse>> {
         val user = authenticationService.getCurrentUser(jwt)
