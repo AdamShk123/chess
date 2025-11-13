@@ -41,7 +41,7 @@ class AuthenticationService(
      *
      * @param jwt The validated JWT token from Auth0 (null in dev mode)
      * @return The User entity from the database
-     * @throws RuntimeException if user is not registered
+     * @throws UserNotFoundException if user is not registered
      */
     fun getCurrentUser(jwt: Jwt?): User {
         // Dev mode: return a default test user when JWT is null
@@ -53,7 +53,7 @@ class AuthenticationService(
 
         // Try to find existing user
         return userRepository.findByAuth0Id(auth0Id)
-            ?: throw RuntimeException("User not registered. Please register at /api/users/register")
+            ?: throw UserNotFoundException(auth0Id)
     }
 
     /**
