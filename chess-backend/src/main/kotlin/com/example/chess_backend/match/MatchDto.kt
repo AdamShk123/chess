@@ -1,20 +1,6 @@
 package com.example.chess_backend.match
 
-import jakarta.validation.constraints.NotNull
 import java.time.LocalDateTime
-
-data class CreateMatchRequest(
-    @field:NotNull(message = "White player ID is required")
-    val whitePlayerId: Int,
-
-    @field:NotNull(message = "Black player ID is required")
-    val blackPlayerId: Int
-)
-
-data class UpdateMatchRequest(
-    val status: MatchStatus?,
-    val result: MatchResult?
-)
 
 data class MatchResponse(
     val id: Int,
@@ -25,10 +11,11 @@ data class MatchResponse(
     val status: MatchStatus,
     val result: MatchResult,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
+    val updatedAt: LocalDateTime,
+    val isWhitePlayer: Boolean
 )
 
-fun Match.toResponse() = MatchResponse(
+fun Match.toResponse(userID: Int) = MatchResponse(
     id = id ?: 0,
     whitePlayerId = whitePlayer.id ?: 0,
     whitePlayerName = whitePlayer.name,
@@ -37,5 +24,6 @@ fun Match.toResponse() = MatchResponse(
     status = status,
     result = result,
     createdAt = createdAt,
-    updatedAt = updatedAt
+    updatedAt = updatedAt,
+    isWhitePlayer = whitePlayer.id == userID
 )
