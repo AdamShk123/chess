@@ -1,5 +1,6 @@
 package com.example.chess_backend.config
 
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -17,6 +18,8 @@ import org.springframework.security.web.SecurityFilterChain
 @EnableWebSecurity
 @Profile("!dev") // Only active when NOT in dev profile
 class SecurityConfig {
+
+    private val logger = LoggerFactory.getLogger(SecurityConfig::class.java)
 
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private lateinit var issuer: String
@@ -68,10 +71,14 @@ class SecurityConfig {
 
 // Custom validator to check the audience claim
 class AudienceValidator(private val audience: String) : OAuth2TokenValidator<Jwt> {
+
+    private val logger = LoggerFactory.getLogger(AudienceValidator::class.java)
+
     override fun validate(jwt: Jwt): OAuth2TokenValidatorResult {
         return if (jwt.audience.contains(audience)) {
             OAuth2TokenValidatorResult.success()
         } else {
+            logger.error("Audience validation failed - expected '$audience' but got ${jwt.audience}")
             OAuth2TokenValidatorResult.failure(
                 OAuth2Error("invalid_token", "The required audience is missing", null)
             )
