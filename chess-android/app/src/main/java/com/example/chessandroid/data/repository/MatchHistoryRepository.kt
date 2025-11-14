@@ -34,11 +34,6 @@ class MatchHistoryRepository @Inject constructor(
             val token = userRepository.getAccessToken().getOrThrow()
             val authHeader = "Bearer $token"
 
-            // Get current user to determine player ID for mapping
-            val currentUser = apiService.getCurrentUser(authHeader)
-
-            Log.d("MatchHistoryRepository", "Fetched current user ID: ${currentUser.id}")
-
             // Convert sort order to API format
             val sortParam = when (sortOrder) {
                 SortOrder.NEWEST_FIRST -> "createdAt,desc"
@@ -56,7 +51,7 @@ class MatchHistoryRepository @Inject constructor(
             Log.d("MatchHistoryRepository", "Loaded ${pageResponse.content.size} matches (page ${pageResponse.number + 1}/${pageResponse.totalPages}, total: ${pageResponse.totalElements})")
 
             // Map matches and create page with metadata
-            val matches = pageResponse.content.map { it.toChessMatch(currentUser.id) }
+            val matches = pageResponse.content.map { it.toChessMatch() }
             val matchHistoryPage = MatchHistoryPage(
                 matches = matches,
                 currentPage = pageResponse.number,

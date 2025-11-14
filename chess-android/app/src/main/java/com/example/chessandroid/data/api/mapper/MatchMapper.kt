@@ -14,18 +14,17 @@ import java.time.format.DateTimeFormatter
 /**
  * Converts a MatchResponseDto from the backend to a ChessMatch domain model
  */
-fun MatchResponseDto.toChessMatch(currentUserId: Int): ChessMatch {
+fun MatchResponseDto.toChessMatch(): ChessMatch {
     // Determine if current user was white or black
-    val isWhitePlayer = whitePlayerId == currentUserId
-    val playerColor = if (isWhitePlayer) PlayerColor.WHITE else PlayerColor.BLACK
+    val playerColor = if (isPlayerWhite) PlayerColor.WHITE else PlayerColor.BLACK
 
     // Determine opponent name based on player color
-    val opponent = if (isWhitePlayer) blackPlayerName else whitePlayerName
+    val opponent = if (isPlayerWhite) blackPlayerName else whitePlayerName
 
     // Map backend result to match result from current user's perspective
     val matchResult = when (result) {
-        "WHITE_WIN" -> if (isWhitePlayer) MatchResult.WIN else MatchResult.LOSS
-        "BLACK_WIN" -> if (isWhitePlayer) MatchResult.LOSS else MatchResult.WIN
+        "WHITE_WIN" -> if (isPlayerWhite) MatchResult.WIN else MatchResult.LOSS
+        "BLACK_WIN" -> if (isPlayerWhite) MatchResult.LOSS else MatchResult.WIN
         "DRAW" -> MatchResult.DRAW
         else -> MatchResult.DRAW // Default for ONGOING or unknown
     }

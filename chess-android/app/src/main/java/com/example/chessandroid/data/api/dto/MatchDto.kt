@@ -47,7 +47,8 @@ data class MatchResponseDto(
     val status: String, // "PENDING", "IN_PROGRESS", "COMPLETED", "ABANDONED"
     val result: String, // "WHITE_WIN", "BLACK_WIN", "DRAW", "ONGOING"
     val createdAt: String, // ISO-8601 format
-    val updatedAt: String  // ISO-8601 format
+    val updatedAt: String,  // ISO-8601 format
+    val isPlayerWhite: Boolean
 )
 
 @Serializable
