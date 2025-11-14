@@ -22,7 +22,7 @@ import kotlin.coroutines.resume
  * Handles user data operations
  */
 class UserRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : IUserRepository {
 
     private val account = Auth0(
@@ -63,6 +63,7 @@ class UserRepository @Inject constructor(
         return try {
             val credentials = authClient
                 .login(email, password, "Username-Password-Authentication")
+                .setAudience(context.getString(R.string.com_auth0_audience))
                 .validateClaims()
                 .await()
 
@@ -95,6 +96,7 @@ class UserRepository @Inject constructor(
             // Token type must be the full URI as specified in Auth0 docs
             val credentials = authClient
                 .loginWithNativeSocialToken(idToken, "http://auth0.com/oauth/token-type/google-id-token")
+                .setAudience(context.getString(R.string.com_auth0_audience))
                 .await()
 
             credentialsManager.saveCredentials(credentials)
@@ -111,7 +113,21 @@ class UserRepository @Inject constructor(
     }
 
     override suspend fun getAccessToken(): Result<String> {
-        return getValidCredentials().map { it.accessToken }
+        return getValidCredentials().map { credentials ->
+            val accessToken = credentials.accessToken
+
+            Log.d("UserRepository", "Access token retrieved successfully")
+            Log.d("UserRepository", "Token type: ${credentials.type}")
+            Log.d("UserRepository", "Token format: ${if (accessToken.split(".").size == 3) "JWT" else "Opaque"}")
+            Log.d("UserRepository", "Expires at: ${credentials.expiresAt}")
+            Log.d("UserRepository", "Has refresh token: ${credentials.refreshToken != null}")
+
+            accessToken
+        }.onFailure { error ->
+            Log.e("UserRepository", "Failed to get access token", error)
+            Log.e("UserRepository", "Error type: ${error.javaClass.simpleName}")
+            Log.e("UserRepository", "Error message: ${error.message}")
+        }
     }
 
     override suspend fun hasValidCredentials(): Boolean {

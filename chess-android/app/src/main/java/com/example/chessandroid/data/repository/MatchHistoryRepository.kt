@@ -1,5 +1,6 @@
 package com.example.chessandroid.data.repository
 
+import android.util.Log
 import com.example.chessandroid.data.api.ChessApiService
 import com.example.chessandroid.data.api.mapper.toChessMatch
 import com.example.chessandroid.ui.screens.matchhistory.SortOrder
@@ -27,12 +28,16 @@ class MatchHistoryRepository @Inject constructor(
         sortOrder: SortOrder
     ): Result<MatchHistoryPage> {
         return try {
+            Log.d("MatchHistoryRepository", "Fetching match history - page: $pageNumber, size: $pageSize, sort: $sortOrder")
+
             // Get access token for authentication
             val token = userRepository.getAccessToken().getOrThrow()
             val authHeader = "Bearer $token"
 
             // Get current user to determine player ID for mapping
             val currentUser = apiService.getCurrentUser(authHeader)
+
+            Log.d("MatchHistoryRepository", "Fetched current user ID: ${currentUser.id}")
 
             // Convert sort order to API format
             val sortParam = when (sortOrder) {
@@ -48,6 +53,8 @@ class MatchHistoryRepository @Inject constructor(
                 sort = sortParam
             )
 
+            Log.d("MatchHistoryRepository", "Loaded ${pageResponse.content.size} matches (page ${pageResponse.number + 1}/${pageResponse.totalPages}, total: ${pageResponse.totalElements})")
+
             // Map matches and create page with metadata
             val matches = pageResponse.content.map { it.toChessMatch(currentUser.id) }
             val matchHistoryPage = MatchHistoryPage(
@@ -62,6 +69,13 @@ class MatchHistoryRepository @Inject constructor(
 
             Result.success(matchHistoryPage)
         } catch (e: Exception) {
+            Log.e("MatchHistoryRepository", "Error fetching match history", e)
+            Log.e("MatchHistoryRepository", "Error type: ${e.javaClass.simpleName}")
+            Log.e("MatchHistoryRepository", "Error message: ${e.message}")
+            if (e is retrofit2.HttpException) {
+                Log.e("MatchHistoryRepository", "HTTP Status Code: ${e.code()}")
+                Log.e("MatchHistoryRepository", "HTTP Response: ${e.response()?.errorBody()?.string()}")
+            }
             Result.failure(e)
         }
     }

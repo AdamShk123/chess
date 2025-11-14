@@ -40,7 +40,8 @@ class MatchHistoryViewModel @Inject constructor(
 
             repository.getMatchHistory(pageNumber = pageNumber, pageSize = pageSize, sortOrder = sortOrder)
                 .onSuccess { page ->
-                    Log.d("MatchHistoryViewModel", "Loaded $page")
+                    Log.d("MatchHistoryViewModel", "Successfully loaded page ${page.currentPage} with ${page.matches.size} matches")
+                    Log.d("MatchHistoryViewModel", "Total pages: ${page.totalPages}, Total elements: ${page.totalElements}")
                     _uiState.update {
                         it.copy(
                             matches = page.matches,
@@ -53,6 +54,20 @@ class MatchHistoryViewModel @Inject constructor(
                     }
                 }
                 .onFailure { error ->
+                    Log.e("MatchHistoryViewModel", "Failed to load match history", error)
+                    Log.e("MatchHistoryViewModel", "Error type: ${error.javaClass.simpleName}")
+                    Log.e("MatchHistoryViewModel", "Error message: ${error.message}")
+
+                    if (error is retrofit2.HttpException) {
+                        Log.e("MatchHistoryViewModel", "HTTP ${error.code()}: ${error.message()}")
+                        when (error.code()) {
+                            401 -> Log.e("MatchHistoryViewModel", "Authentication failed - token may be invalid or expired")
+                            403 -> Log.e("MatchHistoryViewModel", "Forbidden - user may not exist in backend database")
+                            404 -> Log.e("MatchHistoryViewModel", "Endpoint not found")
+                            500 -> Log.e("MatchHistoryViewModel", "Server error")
+                        }
+                    }
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
