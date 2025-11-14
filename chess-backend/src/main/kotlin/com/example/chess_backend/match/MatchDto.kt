@@ -1,5 +1,6 @@
 package com.example.chess_backend.match
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDateTime
 
 data class MatchResponse(
@@ -12,7 +13,8 @@ data class MatchResponse(
     val result: MatchResult,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
-    val isWhitePlayer: Boolean
+    @get:JsonProperty("isPlayerWhite")
+    val isPlayerWhite: Boolean
 )
 
 fun Match.toResponse(userID: Int) = MatchResponse(
@@ -25,5 +27,5 @@ fun Match.toResponse(userID: Int) = MatchResponse(
     result = result,
     createdAt = createdAt,
     updatedAt = updatedAt,
-    isWhitePlayer = whitePlayer.id == userID
+    isPlayerWhite = whitePlayer.id == userID
 )
